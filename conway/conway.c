@@ -86,7 +86,7 @@ int main() {
     simulate(next_state, state);
     render(state);
     memcpy(state, next_state, sizeof(state));
-    sleep(1);
+    usleep(100000);
   }
 
   return 0;
