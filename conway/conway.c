@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 #include <unistd.h>
 
 #define SIZE 30
@@ -67,7 +69,30 @@ void render(bool state[SIZE][SIZE]) {
   }
 }
 
-int main() {
+int main(int argc, char **argv) {
+  int opt;
+  int width, height;
+  static struct option long_options[] = {
+    {"width", required_argument, NULL, 'w'},
+    {"height", required_argument, NULL, 'h'},
+    {NULL, 0, NULL, 0},
+  };
+
+  while ((opt = getopt_long(argc, argv, "w:h:", long_options, NULL)) != -1) {
+    char* ptr_end;
+    switch (opt) {
+      case 'w':
+        width = strtol(optarg, &ptr_end, 10);
+        break;
+      case 'h':
+        height = strtol(optarg, &ptr_end, 10);
+        break;
+    }
+  }
+
+  printf("width: %d, height: %d\n", width, height);
+  return 0;
+
   bool next_state[SIZE][SIZE];
   bool state[SIZE][SIZE] = {false};
 
