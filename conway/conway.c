@@ -31,12 +31,8 @@ int survey(bool state[SIZE][SIZE], int x, int y) {
 
       int index = wrap(i, SIZE);
       int indey = wrap(j, SIZE);
-      // printf("Checking x: %d, y: %d is %s\n", index, indey, state[index][indey] ? "#" : " ");
       if (state[index][indey]) {
-        // printf("Yes: %d, %d\n", index, indey);
         count++;
-      } else {
-        // printf("Nope: %d, %d\n", index, indey);
       }
     }
   }
@@ -49,7 +45,6 @@ void simulate(bool next_state[SIZE][SIZE], bool state[SIZE][SIZE]) {
   for (int i = 0; i < SIZE; i++) {
     for (int j = 0; j < SIZE; j++) {
       count = survey(state, i, j);
-      // printf("x: %d, y: %d has %d alive neighbours\n", i, j, count);
       if (state[i][j] == true && (count < 2 || count > 3)) {
         next_state[i][j] = false;
       } else if (state[i][j] == false && count == 3) {
