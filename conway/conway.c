@@ -5,15 +5,13 @@
 #include <getopt.h>
 #include <unistd.h>
 
-#define SIZE 30
-
 void clear() {
   printf("\e[1;1H\e[2J");
 }
 
 int wrap(int value, int size) {
   if (value < 0) {
-    return value + size; 
+    return value + size;
   }
 
   if (value > size - 1) {
@@ -23,7 +21,7 @@ int wrap(int value, int size) {
   return value;
 }
 
-int survey(bool state[SIZE][SIZE], int x, int y) {
+int survey(int width, int height, bool state[width][height], int x, int y) {
   int count = 0;
   for (int i = x - 1; i <= x + 1; i++) {
     for (int j = y - 1; j <= y + 1; j++) {
@@ -31,8 +29,8 @@ int survey(bool state[SIZE][SIZE], int x, int y) {
          continue;
       }
 
-      int index = wrap(i, SIZE);
-      int indey = wrap(j, SIZE);
+      int index = wrap(i, width);
+      int indey = wrap(j, height);
       if (state[index][indey]) {
         count++;
       }
@@ -42,11 +40,11 @@ int survey(bool state[SIZE][SIZE], int x, int y) {
   return count;
 }
 
-void simulate(bool next_state[SIZE][SIZE], bool state[SIZE][SIZE]) {
+void simulate(int width, int height, bool state[width][height], bool next_state[width][height]) {
   int count = 0;
-  for (int i = 0; i < SIZE; i++) {
-    for (int j = 0; j < SIZE; j++) {
-      count = survey(state, i, j);
+  for (int i = 0; i < width; i++) {
+    for (int j = 0; j < height; j++) {
+      count = survey(width, height, state, i, j);
       if (state[i][j] == true && (count < 2 || count > 3)) {
         next_state[i][j] = false;
       } else if (state[i][j] == false && count == 3) {
@@ -58,10 +56,10 @@ void simulate(bool next_state[SIZE][SIZE], bool state[SIZE][SIZE]) {
   }
 }
 
-void render(bool state[SIZE][SIZE]) {
+void render(int width, int height, bool state[width][height]) {
   clear();
-  for (int i = 0; i < SIZE; i++) {
-    for (int j = 0; j < SIZE; j++) {
+  for (int i = 0; i < width; i++) {
+    for (int j = 0; j < height; j++) {
       printf("%s ", state[i][j] ? "#" : " ");
     }
 
@@ -72,6 +70,7 @@ void render(bool state[SIZE][SIZE]) {
 int main(int argc, char **argv) {
   int opt;
   int width, height;
+  width = height = 15;
   static struct option long_options[] = {
     {"width", required_argument, NULL, 'w'},
     {"height", required_argument, NULL, 'h'},
@@ -79,22 +78,19 @@ int main(int argc, char **argv) {
   };
 
   while ((opt = getopt_long(argc, argv, "w:h:", long_options, NULL)) != -1) {
-    char* ptr_end;
     switch (opt) {
       case 'w':
-        width = strtol(optarg, &ptr_end, 10);
+        width = strtol(optarg, NULL, 10);
         break;
       case 'h':
-        height = strtol(optarg, &ptr_end, 10);
+        height = strtol(optarg, NULL, 10);
         break;
     }
   }
 
-  printf("width: %d, height: %d\n", width, height);
-  return 0;
-
-  bool next_state[SIZE][SIZE];
-  bool state[SIZE][SIZE] = {false};
+  bool next_state[width][height];
+  bool state[width][height];
+  memset(state, false, width * height * sizeof(bool));
 
   state[4][5] = true;
   state[5][4] = true;
@@ -103,8 +99,8 @@ int main(int argc, char **argv) {
   state[6][6] = true;
 
   while (true) {
-    simulate(next_state, state);
-    render(state);
+    simulate(width, height, state, next_state);
+    render(width, height, state);
     memcpy(state, next_state, sizeof(state));
     usleep(100000);
   }
