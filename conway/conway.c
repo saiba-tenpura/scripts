@@ -5,8 +5,16 @@
 #include <getopt.h>
 #include <unistd.h>
 
-void clear() {
-  printf("\e[1;1H\e[2J");
+typedef struct {
+  int width;
+  int height;
+  bool state[];
+} Field;
+
+void init(Field* field, int width, int height) {
+  field->width = width;
+  field->height = height;
+  memset(field->state, false, width * height * sizeof(bool));
 }
 
 int wrap(int value, int size) {
@@ -21,7 +29,7 @@ int wrap(int value, int size) {
   return value;
 }
 
-int survey(int width, int height, bool state[width][height], int x, int y) {
+int survey(Field* field, int x, int y) {
   int count = 0;
   for (int i = x - 1; i <= x + 1; i++) {
     for (int j = y - 1; j <= y + 1; j++) {
@@ -29,9 +37,9 @@ int survey(int width, int height, bool state[width][height], int x, int y) {
          continue;
       }
 
-      int index = wrap(i, width);
-      int indey = wrap(j, height);
-      if (state[index][indey]) {
+      int index = wrap(i, field->width);
+      int indey = wrap(j, field->height);
+      if (field->state[index * field->width + indey]) {
         count++;
       }
     }
@@ -40,27 +48,31 @@ int survey(int width, int height, bool state[width][height], int x, int y) {
   return count;
 }
 
-void simulate(int width, int height, bool state[width][height], bool next_state[width][height]) {
+void simulate(Field* field, bool next_state[field->width][field->height]) {
   int count = 0;
-  for (int i = 0; i < width; i++) {
-    for (int j = 0; j < height; j++) {
-      count = survey(width, height, state, i, j);
-      if (state[i][j] == true && (count < 2 || count > 3)) {
+  for (int i = 0; i < field->width; i++) {
+    for (int j = 0; j < field->height; j++) {
+      count = survey(field, i, j);
+      if (field->state[i * field->width + j] == true && (count < 2 || count > 3)) {
         next_state[i][j] = false;
-      } else if (state[i][j] == false && count == 3) {
+      } else if (field->state[i * field->width + j] == false && count == 3) {
         next_state[i][j] = true;
       } else {
-        next_state[i][j] = state[i][j];
+        next_state[i][j] = field->state[i * field->width + j];
       }
     }
   }
 }
 
-void render(int width, int height, bool state[width][height]) {
+void clear() {
+  printf("\e[1;1H\e[2J");
+}
+
+void render(Field* field) {
   clear();
-  for (int i = 0; i < width; i++) {
-    for (int j = 0; j < height; j++) {
-      printf("%s ", state[i][j] ? "#" : " ");
+  for (int i = 0; i < field->width; i++) {
+    for (int j = 0; j < field->height; j++) {
+      printf("%s ", field->state[i * field->width + j] ? "#" : " ");
     }
 
     printf("\n");
@@ -89,21 +101,21 @@ int main(int argc, char **argv) {
   }
 
   bool next_state[width][height];
-  bool state[width][height];
-  memset(state, false, width * height * sizeof(bool));
-
-  state[4][5] = true;
-  state[5][4] = true;
-  state[5][5] = true;
-  state[6][5] = true;
-  state[6][6] = true;
+  Field* field = malloc(sizeof(Field) + width * height * sizeof(bool));
+  init(field, width, height);
+  field->state[4 * width + 5] = true;
+  field->state[5 * width + 4] = true;
+  field->state[5 * width + 5] = true;
+  field->state[6 * width + 5] = true;
+  field->state[6 * width + 6] = true;
 
   while (true) {
-    simulate(width, height, state, next_state);
-    render(width, height, state);
-    memcpy(state, next_state, sizeof(state));
+    simulate(field, next_state);
+    render(field);
+    memcpy(field->state, next_state, width * height * sizeof(bool));
     usleep(100000);
   }
 
+  free(field);
   return 0;
 }
