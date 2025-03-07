@@ -11,10 +11,17 @@ typedef struct {
   bool state[];
 } Field;
 
-void init(Field* field, int width, int height) {
+Field* init(int width, int height) {
+  Field* field = malloc(sizeof(Field) + width * height * sizeof(bool));
+  if (field == NULL) {
+    printf("Failed to allocate memory for field!");
+    exit(EXIT_FAILURE);
+  }
+
   field->width = width;
   field->height = height;
   memset(field->state, false, width * height * sizeof(bool));
+  return field;
 }
 
 int wrap(int value, int size) {
@@ -100,9 +107,8 @@ int main(int argc, char **argv) {
     }
   }
 
+  Field* field = init(width, height);
   bool next_state[width][height];
-  Field* field = malloc(sizeof(Field) + width * height * sizeof(bool));
-  init(field, width, height);
   field->state[4 * width + 5] = true;
   field->state[5 * width + 4] = true;
   field->state[5 * width + 5] = true;
