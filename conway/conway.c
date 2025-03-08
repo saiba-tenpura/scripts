@@ -5,14 +5,15 @@
 #include <getopt.h>
 #include <unistd.h>
 
-typedef struct {
+struct Field {
   int width;
   int height;
   bool state[];
-} Field;
+};
 
-Field* init(int width, int height) {
-  Field* field = malloc(sizeof(Field) + width * height * sizeof(bool));
+struct Field *init(int width, int height)
+{
+  struct Field *field = malloc(sizeof(struct Field*) + width * height * sizeof(bool));
   if (field == NULL) {
     printf("Failed to allocate memory for field!");
     exit(EXIT_FAILURE);
@@ -24,7 +25,8 @@ Field* init(int width, int height) {
   return field;
 }
 
-int wrap(int value, int size) {
+int wrap(int value, int size)
+{
   if (value < 0) {
     return value + size;
   }
@@ -36,7 +38,8 @@ int wrap(int value, int size) {
   return value;
 }
 
-int survey(Field* field, int x, int y) {
+int survey(struct Field *field, int x, int y)
+{
   int count = 0;
   for (int i = x - 1; i <= x + 1; i++) {
     for (int j = y - 1; j <= y + 1; j++) {
@@ -55,7 +58,8 @@ int survey(Field* field, int x, int y) {
   return count;
 }
 
-void simulate(Field* field, bool next_state[field->width][field->height]) {
+void simulate(struct Field *field, bool next_state[field->width][field->height])
+{
   int count = 0;
   for (int i = 0; i < field->width; i++) {
     for (int j = 0; j < field->height; j++) {
@@ -71,11 +75,13 @@ void simulate(Field* field, bool next_state[field->width][field->height]) {
   }
 }
 
-void clear() {
+void clear()
+{
   printf("\e[1;1H\e[2J");
 }
 
-void render(Field* field) {
+void render(struct Field *field)
+{
   clear();
   for (int i = 0; i < field->width; i++) {
     for (int j = 0; j < field->height; j++) {
@@ -86,7 +92,8 @@ void render(Field* field) {
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   int opt;
   int width, height;
   width = height = 15;
@@ -107,7 +114,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  Field* field = init(width, height);
+  struct Field *field = init(width, height);
   bool next_state[width][height];
   field->state[4 * width + 5] = true;
   field->state[5 * width + 4] = true;
