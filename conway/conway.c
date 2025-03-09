@@ -38,6 +38,17 @@ int wrap(int value, int size)
   return value;
 }
 
+void set(struct Field *field, int width, int height, bool pattern[width][height], int offset_x, int offset_y)
+{
+  for (int i = 0; i < width; i++) {
+    for (int j = 0; j < height; j++) {
+      int index = wrap(i + offset_x, field->width);
+      int indey = wrap(j + offset_y, field->height);
+      field->state[index * field->width + indey] = pattern[i][j];
+    }
+  }
+}
+
 int survey(struct Field *field, int x, int y)
 {
   int count = 0;
@@ -95,8 +106,7 @@ void render(struct Field *field)
 int main(int argc, char **argv)
 {
   int opt;
-  int width, height;
-  width = height = 15;
+  int width = 15, height = 15;
   static struct option long_options[] = {
     {"width", required_argument, NULL, 'w'},
     {"height", required_argument, NULL, 'h'},
@@ -116,12 +126,13 @@ int main(int argc, char **argv)
 
   struct Field *field = init(width, height);
   bool next_state[width][height];
-  field->state[4 * width + 5] = true;
-  field->state[5 * width + 4] = true;
-  field->state[5 * width + 5] = true;
-  field->state[6 * width + 5] = true;
-  field->state[6 * width + 6] = true;
+  bool pattern[3][3] = {
+    {0, 1, 0},
+    {1, 1, 0},
+    {0, 1, 1},
+  };
 
+  set(field, 3, 3, pattern, 6, 6);
   while (true) {
     simulate(field, next_state);
     render(field);
