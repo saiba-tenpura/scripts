@@ -4,13 +4,14 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 CONFIG_VARS="RESTIC_REPOSITORY RESTIC_PASSWORD_FILE FILES"
 
 usage() {
-    cat <<-EOF
+	cat <<-EOF
 	Usage: $(basename "$0") [options]
 
 	Options:
 	-h, --help      Show this help message.
 	-r, --run       Execute backup of target files, prune old backups afterwards and check backup integrity.
 	-s, --setup     Setup password file, init repository and create cron entry.
+  --sync          Sync the restic repository to one of the configured drives.
 	EOF
 
     exit 1
@@ -41,6 +42,36 @@ run() {
     restic backup -vv --tag "${HOSTNAME}" $@
     restic forget --keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 24 --prune
     restic check | tee -a /var/log/restic.log
+    exit 0
+}
+
+sync_repo() {
+    uuid="$1"
+    source "${SCRIPT_DIR}/config.sh"
+    sleep 5
+    for uuid in $(lsblk --noheadings --list --output uuid); do
+        if [[ "${SYNC_DRIVE_UUIDS[*]}" =~ "$uuid" ]]; then
+            break
+        fi
+
+        uuid=
+    done
+
+    if [ ! $uuid ]; then
+        echo "No backup disk found, exit."
+        exit 0
+    fi
+
+    mountpoint="$(findmnt -n -o TARGET /dev/disk/by-uuid/$uuid)"
+    if [ ! $mountpoint ]; then
+        echo "No mountpoint found, exit."
+        exit 0
+    fi
+
+    rsync -az "$RESTIC_REPOSITORY" "$mountpoint/restic-repo"
+
+    sync
+
     exit 0
 }
 
@@ -78,6 +109,10 @@ while [ $# -gt 0 ]; do
         -s|--setup)
             check
             setup
+            ;;
+        --sync)
+            check
+            sync_repo
             ;;
         -r|--run)
             check
