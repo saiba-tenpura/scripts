@@ -93,9 +93,16 @@ setup() {
 
     printf 'Setup crontab!\n'
     SCRIPT_NAME="$(basename $0)"
-	cat <<-EOF >> /etc/cron.d/restic
+	cat <<-EOF > /etc/cron.d/restic
 	30 10 * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
 	30 20 * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
+	EOF
+
+    ln -s "${SCRIPT_DIR}/sync.rules" /etc/udev/rules.d/80-backup-sync.rules
+	cat <<-EOF > /etc/systemd/system/backup-sync.service
+	[Service]
+	Type=oneshot
+	ExecStart=${SCRIPT_DIR}/${SCRIPT_NAME} --sync
 	EOF
 
     exit 0
