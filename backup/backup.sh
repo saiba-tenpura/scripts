@@ -58,20 +58,21 @@ sync_repo() {
     done
 
     if [ ! $uuid ]; then
-        echo "No backup disk found, exit."
+        printf 'No backup disk found, exit.\n'
         exit 0
     fi
 
     mountpoint="$(findmnt -n -o TARGET /dev/disk/by-uuid/$uuid)"
-    if [ ! $mountpoint ]; then
-        echo "No mountpoint found, exit."
+    if [ ! "$mountpoint" ]; then
+        printf 'No mountpoint found, exit.\n'
         exit 0
     fi
 
-    rsync -az "$RESTIC_REPOSITORY" "$mountpoint/restic-repo"
+    rsync -az "$RESTIC_REPOSITORY" "$mountpoint"
 
     sync
 
+    printf 'Completed sync for: %s\n' "$mountpoint"
     exit 0
 }
 
