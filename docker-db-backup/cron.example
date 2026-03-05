@@ -1,0 +1,3 @@
+0 23 * * * root /path/to/docker-db-backup.sh --daily
+30 23 1 * * root /path/to/docker-db-backup.sh --monthly
+
