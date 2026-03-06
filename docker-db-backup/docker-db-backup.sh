@@ -1,20 +1,44 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
-BACKUP_BASE_DIR="/var/backups/docker-db-dumps/"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+BACKUP_BASE_DIR="/var/backups/docker-db-dumps"
 
 usage() {
-    cat <<-EOF
-    Usage: $(basename "$0") [options]
+	cat <<-EOF
+	Usage: $(basename "$0") [options]
 
 	Options:
 	-h, --help      Show this help message.
-	-d, --daily 	Run daily backup and cleanup functionality.
+	-d, --daily     Run daily backup and cleanup functionality.
 	-m, --monthly   Run monthly backup and cleanup functionality.
+	-s, --setup     Setup cron entry.
 	EOF
 
     exit 1
+}
+
+error() {
+    printf '\e[93mERROR:\e[m %s\n' "${1}"
+    exit 2
+}
+
+check() {
+    if [[ "$EUID" -ne 0 ]]; then
+        error "Please run this script as root!"
+    fi
+}
+
+setup() {
+    printf 'Setup crontab!\n'
+    local script_name="$(basename $0)"
+	cat <<-EOF > /etc/cron.d/docker-db-dumps
+	0 8 * * * root ${SCRIPT_DIR}/${script_name} --daily >/dev/null 2>&1
+	30 8 1 * * root ${SCRIPT_DIR}/${script_name} --monthly >/dev/null 2>&1
+	EOF
+
+    exit 0
 }
 
 run_backup() {
@@ -53,20 +77,11 @@ run_backup() {
 
     # Cleanup old backups
     ls -dt "${BACKUP_DIR}/"* | tail -n +$RETENTION_AMOUNT | xargs -I {} rm -rf -- {}
-    exit
-}
-
-error() {
-    printf '\e[93mERROR:\e[m %s\n' "${1}"
-    exit 2
+    exit 0
 }
 
 if [[ $# -eq 0 ]] ; then
     error "No options were given. See -h|--help for available options."
-fi
-
-if [[ "$EUID" -ne 0 ]]; then
-    error "Please run this script as root!"
 fi
 
 while [ $# -gt 0 ]; do
@@ -74,10 +89,16 @@ while [ $# -gt 0 ]; do
         -h|--help)
             usage
             ;;
+        -s|--setup)
+            check
+            setup
+            ;;
         -d|--daily)
+            check
             run_backup "${BACKUP_BASE_DIR}/daily" 15
             ;;
         -m|--monthly)
+            check
             run_backup "${BACKUP_BASE_DIR}/monthly" 13
             ;;
         *)
@@ -85,5 +106,4 @@ while [ $# -gt 0 ]; do
             ;;
     esac
 done
-
 
