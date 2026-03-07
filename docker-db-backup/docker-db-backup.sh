@@ -41,42 +41,40 @@ setup() {
     exit 0
 }
 
+backup_container() {
+    local container="$1"
+    local cmd="$2"
+    local dump_cmd="$3"
+    local backup_dir="$4"
+
+    local project=$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.project"}}' $container)
+    mkdir -p "${backup_dir}/${project}"
+
+    databases=$(docker exec $container bash -c "$cmd")
+    for db in $databases; do
+        docker exec $container bash -c "$dump_cmd" -- "${db}" | bzip2 --best > "${backup_dir}/${project}/${db}.sql.bz2"
+    done
+}
+
 run_backup() {
-    BACKUP_DIR="$1"
-    RETENTION_AMOUNT=$2
-    DATE=$(date +%Y-%m-%d)
+    local backup_dir="$1"
+    local retention_period="$2"
 
-    # Get all MySQL containers
-    mysql_images=$(docker images --filter "reference=mysql:*" -q)
-    mysql_containers=$(for hash in $mysql_images; do docker ps --filter "ancestor=$hash" -q; done)
-    for container in $mysql_containers; do
-        # Get compose project name
-        project=$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.project"}}' $container)
-
-        # Backup MySQL database
-        mkdir -p "${BACKUP_DIR}/${DATE}/${project}"
-        databases=$(docker exec $container bash -c 'mysql -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"')
-        for db in $databases; do
-            docker exec $container bash -c 'mysqldump -u root --password="$MYSQL_ROOT_PASSWORD" --opt $1' -- "${db}" | bzip2 --best > "${BACKUP_DIR}/${DATE}/${project}/${db}.sql.bz2"
-        done
+    local date=$(date +%Y-%m-%d)
+    images=$(docker images --filter "reference=mysql:*" -q)
+    containers=$(for hash in $images; do docker ps --filter "ancestor=$hash" -q; done)
+    for container in $containers; do
+      backup_container "$container" 'mysql -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"' 'mysqldump -u root --password="$MYSQL_ROOT_PASSWORD" --opt $1' "${backup_dir}/${date}"
     done
 
-    mariadb_images=$(docker images --filter "reference=mariadb:*" -q)
-    mariadb_containers=$(for hash in $mariadb_images; do docker ps --filter "ancestor=$hash" -q; done)
-    for container in $mariadb_containers; do
-        # Get compose project name
-        project=$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.project"}}' $container)
-
-        # Backup MariaDB database
-        mkdir -p "${BACKUP_DIR}/${DATE}/${project}"
-        databases=$(docker exec $container bash -c 'mariadb -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"')
-        for db in $databases; do
-            docker exec $container bash -c 'mariadb-dump -u root --password="$MYSQL_ROOT_PASSWORD" --opt $1' -- "${db}" | bzip2 --best > "${BACKUP_DIR}/${DATE}/${project}/${db}.sql.bz2"
-        done
+    images=$(docker images --filter "reference=mariadb:*" -q)
+    containers=$(for hash in $images; do docker ps --filter "ancestor=$hash" -q; done)
+    for container in $containers; do
+      backup_container "$container" 'mariadb -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"' 'mariadb-dump -u root --password="$MYSQL_ROOT_PASSWORD" --opt $1' "${backup_dir}/${date}"
     done
 
     # Cleanup old backups
-    ls -dt "${BACKUP_DIR}/"* | tail -n +$RETENTION_AMOUNT | xargs -I {} rm -rf -- {}
+    ls -dt "${backup_dir}/"* | tail -n +$retention_period | xargs -I {} rm -rf -- {}
     exit 0
 }
 
