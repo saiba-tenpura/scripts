@@ -4,6 +4,17 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 BACKUP_BASE_DIR="/var/backups/docker-db-dumps"
+BACKUP_IMAGES="mysql mariadb"
+
+declare -A CMD=(
+    [mysql]='mysql -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"'
+    [mariadb]='mariadb -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"'
+)
+
+declare -A DUMP_CMD=(
+    [mysql]='mysqldump -u root --password="$MYSQL_ROOT_PASSWORD" --opt $1'
+    [mariadb]='mariadb-dump -u root --password="$MYSQL_ROOT_PASSWORD" --opt $1'
+)
 
 usage() {
 	cat <<-EOF
@@ -61,16 +72,12 @@ run_backup() {
     local retention_period="$2"
 
     local date=$(date +%Y-%m-%d)
-    images=$(docker images --filter "reference=mysql:*" -q)
-    containers=$(for hash in $images; do docker ps --filter "ancestor=$hash" -q; done)
-    for container in $containers; do
-      backup_container "$container" 'mysql -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"' 'mysqldump -u root --password="$MYSQL_ROOT_PASSWORD" --opt $1' "${backup_dir}/${date}"
-    done
-
-    images=$(docker images --filter "reference=mariadb:*" -q)
-    containers=$(for hash in $images; do docker ps --filter "ancestor=$hash" -q; done)
-    for container in $containers; do
-      backup_container "$container" 'mariadb -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"' 'mariadb-dump -u root --password="$MYSQL_ROOT_PASSWORD" --opt $1' "${backup_dir}/${date}"
+    for image in $BACKUP_IMAGES; do
+        images=$(docker images --filter "reference=$image:*" -q)
+        containers=$(for hash in $images; do docker ps --filter "ancestor=$hash" -q; done)
+        for container in $containers; do
+            backup_container "$container" "${CMD[$image]}" "${DUMP_CMD[$image]}" "${backup_dir}/${date}"
+        done
     done
 
     # Cleanup old backups
