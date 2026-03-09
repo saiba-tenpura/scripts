@@ -4,16 +4,18 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 BACKUP_BASE_DIR="/var/backups/docker-db-dumps"
-BACKUP_IMAGES="mysql mariadb"
+BACKUP_IMAGES="mysql mariadb postgres"
 
 declare -A CMD=(
     [mysql]='mysql -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"'
     [mariadb]='mariadb -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"'
+    [postgres]='psql -U postgres -At -c "SELECT datname FROM pg_database WHERE not datistemplate"'
 )
 
 declare -A DUMP_CMD=(
     [mysql]='mysqldump -u root --password="$MYSQL_ROOT_PASSWORD" --opt $1'
     [mariadb]='mariadb-dump -u root --password="$MYSQL_ROOT_PASSWORD" --opt $1'
+    [postgres]='pg_dump -U postgres $1'
 )
 
 usage() {
