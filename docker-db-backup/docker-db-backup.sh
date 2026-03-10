@@ -75,8 +75,8 @@ run_backup() {
 
     local date=$(date +%Y-%m-%d)
     for image in $BACKUP_IMAGES; do
-        images=$(docker images --filter "reference=$image:*" -q)
-        containers=$(for hash in $images; do docker ps --filter "ancestor=$hash" -q; done)
+        images=$(docker images --filter "reference=${image}:*" --filter "reference=*/${image}:*" --filter "reference=*/*/${image}:*" -q)
+        containers=$(for hash in $images; do docker ps --filter "ancestor=${hash}" -q; done)
         for container in $containers; do
             backup_container "$container" "${CMD[$image]}" "${DUMP_CMD[$image]}" "${backup_dir}/${date}"
         done
