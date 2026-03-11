@@ -3,6 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+LOG_FILE="/var/log/docker-db-dumps.log"
 BACKUP_BASE_DIR="/var/backups/docker-db-dumps"
 BACKUP_IMAGES="mysql mariadb postgres"
 
@@ -32,6 +33,10 @@ usage() {
     exit 1
 }
 
+log() {
+    printf '[%s] %s\n' "$(date '+%F %T')" "$*"
+}
+
 error() {
     printf '\e[93mERROR:\e[m %s\n' "${1}"
     exit 2
@@ -44,11 +49,11 @@ check() {
 }
 
 setup() {
-    printf 'Setup crontab!\n'
+    log 'Setting up cronjob!'
     local script_name="$(basename $0)"
 	cat <<-EOF > /etc/cron.d/docker-db-dumps
-	0 8 * * * root ${SCRIPT_DIR}/${script_name} --daily >/dev/null 2>&1
-	30 8 1 * * root ${SCRIPT_DIR}/${script_name} --monthly >/dev/null 2>&1
+	0 8 * * * root ${SCRIPT_DIR}/${script} --daily >> ${LOG_FILE} 2>&1
+	30 8 1 * * root ${SCRIPT_DIR}/${script} --monthly >> ${LOG_FILE} 2>&1
 	EOF
 
     exit 0
@@ -63,17 +68,23 @@ backup_container() {
     local project=$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.project"}}' $container)
     mkdir -p "${backup_dir}/${project}"
 
+    log "Backing up container $container"
     databases=$(docker exec $container bash -c "$cmd")
     for db in $databases; do
+        log "Dumping database $db"
         docker exec $container bash -c "$dump_cmd" -- "${db}" | bzip2 --best > "${backup_dir}/${project}/${db}.sql.bz2"
     done
 }
 
-run_backup() {
+cleanup() {
     local backup_dir="$1"
     local retention_period="$2"
+    log "Run backup cleanup"
+    ls -dt "${backup_dir}/"* | tail -n +$retention_period | xargs -I {} rm -rf -- {}
+}
 
     local date=$(date +%Y-%m-%d)
+    log "Start backup for $date"
     for image in $BACKUP_IMAGES; do
         images=$(docker images --filter "reference=${image}:*" --filter "reference=*/${image}:*" --filter "reference=*/*/${image}:*" -q)
         containers=$(for hash in $images; do docker ps --filter "ancestor=${hash}" -q; done)
@@ -82,8 +93,8 @@ run_backup() {
         done
     done
 
-    # Cleanup old backups
-    ls -dt "${backup_dir}/"* | tail -n +$retention_period | xargs -I {} rm -rf -- {}
+    cleanup "$backup_dir" "$retention_period"
+    log "Finished backup for $date"
     exit 0
 }
 
