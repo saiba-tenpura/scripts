@@ -39,18 +39,16 @@ log() {
 
 error() {
     printf '\e[93mERROR:\e[m %s\n' "${1}"
-    exit 2
+    exit 1
 }
 
 check() {
-    if [[ "$EUID" -ne 0 ]]; then
-        error "Please run this script as root!"
-    fi
+    [[ "$EUID" -eq 0 ]] || error "Please run this script as root!"
 }
 
 setup() {
     log 'Setting up cronjob!'
-    local script_name="$(basename $0)"
+    local script="$(basename $0)"
 	cat <<-EOF > /etc/cron.d/docker-db-dumps
 	0 8 * * * root ${SCRIPT_DIR}/${script} --daily >> ${LOG_FILE} 2>&1
 	30 8 1 * * root ${SCRIPT_DIR}/${script} --monthly >> ${LOG_FILE} 2>&1
@@ -61,40 +59,45 @@ setup() {
 
 backup_container() {
     local container="$1"
-    local cmd="$2"
-    local dump_cmd="$3"
-    local backup_dir="$4"
+    local engine="$2"
+    local backup_dir="$3"
 
     local project=$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.project"}}' $container)
     mkdir -p "${backup_dir}/${project}"
 
-    log "Backing up container $container"
-    databases=$(docker exec $container bash -c "$cmd")
+    log "Backing up $engine container $container"
+    local databases="$(docker exec $container bash -c "${CMD[$engine]}")"
     for db in $databases; do
         log "Dumping database $db"
-        docker exec $container bash -c "$dump_cmd" -- "${db}" | bzip2 --best > "${backup_dir}/${project}/${db}.sql.bz2"
+        docker exec $container bash -c "${DUMP_CMD[$engine]}" -- "${db}" | bzip2 --best > "${backup_dir}/${project}/${db}.sql.bz2"
     done
 }
 
 cleanup() {
     local backup_dir="$1"
     local retention_period="$2"
-    log "Run backup cleanup"
+    log "Cleanup old backups"
     ls -dt "${backup_dir}/"* | tail -n +$retention_period | xargs -I {} rm -rf -- {}
 }
 
-    local date=$(date +%Y-%m-%d)
-    log "Start backup for $date"
+run_backup() {
+    local type="$1"
+    local retention_period="$2"
+
+    local date="$(date +%F)"
+    log "Start $type backup for $date"
+
+    local backup_dir="${BACKUP_BASE_DIR}/${type}"
     for image in $BACKUP_IMAGES; do
-        images=$(docker images --filter "reference=${image}:*" --filter "reference=*/${image}:*" --filter "reference=*/*/${image}:*" -q)
-        containers=$(for hash in $images; do docker ps --filter "ancestor=${hash}" -q; done)
+        local images="$(docker images --filter "reference=${image}:*" --filter "reference=*/${image}:*" --filter "reference=*/*/${image}:*" -q)"
+        local containers="$(for hash in $images; do docker ps --filter "ancestor=${hash}" -q; done)"
         for container in $containers; do
-            backup_container "$container" "${CMD[$image]}" "${DUMP_CMD[$image]}" "${backup_dir}/${date}/${image}"
+            backup_container "$container" "$image" "${backup_dir}/${date}/${image}"
         done
     done
 
     cleanup "$backup_dir" "$retention_period"
-    log "Finished backup for $date"
+    log "Finished $type backup for $date"
     exit 0
 }
 
@@ -113,11 +116,11 @@ while [ $# -gt 0 ]; do
             ;;
         -d|--daily)
             check
-            run_backup "${BACKUP_BASE_DIR}/daily" 15
+            run_backup "daily" 15
             ;;
         -m|--monthly)
             check
-            run_backup "${BACKUP_BASE_DIR}/monthly" 13
+            run_backup "monthly" 13
             ;;
         *)
             error "Unsupported option $1 was given. See -h|--help for available options."
