@@ -76,8 +76,12 @@ backup_container() {
 cleanup() {
     local backup_dir="$1"
     local retention_period="$2"
-    log "Cleanup old backups"
-    ls -dt "${backup_dir}/"* | tail -n +$retention_period | xargs -I {} rm -rf -- {}
+    log "Cleaning up backups"
+    mapfile -t backups < <(printf '%s\n' "$backup_dir"/* | sort -r)
+    for bkp in "${backups[@]:retention_period}"; do
+        log "Remove backup: $bkp"
+        rm -rf -- "$bkp"
+    done
 }
 
 run_backup() {
