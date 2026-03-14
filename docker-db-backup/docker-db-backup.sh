@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 LOG_FILE="/var/log/docker-db-dumps.log"
 BACKUP_BASE_DIR="/var/backups/docker-db-dumps"
-BACKUP_IMAGES="mysql mariadb postgres"
+BACKUP_IMAGES=(mysql mariadb postgres)
 
 declare -A CMD=(
     [mysql]='mysql -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"'
@@ -62,12 +62,12 @@ backup_container() {
     local engine="$2"
     local backup_dir="$3"
 
-    local project=$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.project"}}' $container)
+    local project="$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.project"}}' $container)"
     mkdir -p "${backup_dir}/${project}"
 
     log "Backing up $engine container $container"
-    local databases="$(docker exec $container bash -c "${CMD[$engine]}")"
-    for db in $databases; do
+    mapfile -t databases < <(docker exec $container bash -c "${CMD[$engine]}")
+    for db in "${databases[@]}"; do
         log "Dumping database $db"
         docker exec $container bash -c "${DUMP_CMD[$engine]}" -- "${db}" | bzip2 --best > "${backup_dir}/${project}/${db}.sql.bz2"
     done
@@ -92,10 +92,10 @@ run_backup() {
     log "Start $type backup for $date"
 
     local backup_dir="${BACKUP_BASE_DIR}/${type}"
-    for image in $BACKUP_IMAGES; do
-        local images="$(docker images --filter "reference=${image}:*" --filter "reference=*/${image}:*" --filter "reference=*/*/${image}:*" -q)"
-        local containers="$(for hash in $images; do docker ps --filter "ancestor=${hash}" -q; done)"
-        for container in $containers; do
+    for image in "${BACKUP_IMAGES[@]}"; do
+        mapfile -t images < <(docker images --filter "reference=${image}:*" --filter "reference=*/${image}:*" --filter "reference=*/*/${image}:*" -q)
+        mapfile -t containers < <(for hash in "${images[@]}"; do docker ps --filter "ancestor=${hash}" -q; done)
+        for container in "${containers[@]}"; do
             backup_container "$container" "$image" "${backup_dir}/${date}/${image}"
         done
     done
