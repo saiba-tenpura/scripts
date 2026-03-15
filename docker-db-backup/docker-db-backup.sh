@@ -38,7 +38,7 @@ log() {
 }
 
 error() {
-    printf '\e[93mERROR:\e[m %s\n' "${1}"
+    printf 'ERROR: %s\n' "${1}" >&2
     exit 1
 }
 
@@ -57,12 +57,19 @@ setup() {
     exit 0
 }
 
+get_project_name() {
+    local container="$1"
+
+    docker inspect --format='{{ index .Config.Labels "com.docker.compose.project"}}' $container 2>/dev/null || true
+}
+
 backup_container() {
     local container="$1"
     local engine="$2"
     local backup_dir="$3"
 
-    local project="$(docker inspect --format='{{ index .Config.Labels "com.docker.compose.project"}}' $container)"
+    local project="$(get_project_name "$container")"
+    project="${project:-unknown}"
     mkdir -p "${backup_dir}/${project}"
 
     log "Backing up $engine container $container"
@@ -130,5 +137,6 @@ while [ $# -gt 0 ]; do
             error "Unsupported option $1 was given. See -h|--help for available options."
             ;;
     esac
+    shift
 done
 
