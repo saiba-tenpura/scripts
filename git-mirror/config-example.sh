@@ -7,5 +7,6 @@ GITEA_URL="https://gitea.example.com"
 GITEA_USER="admin"
 GITEA_TOKEN=""
 
-WORKDIR="./repo_mirror_tmp"
+TMP_DIR="./tmp_mirror"
+EXCLUDED_REPOS=()
 PER_PAGE=100
