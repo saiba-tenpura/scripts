@@ -112,7 +112,7 @@ run_backup() {
     exit 0
 }
 
-if [[ $# -eq 0 ]] ; then
+if [[ $# -eq 0 ]]; then
     error "No options were given. See -h|--help for available options."
 fi
 

@@ -130,5 +130,6 @@ while [ $# -gt 0 ]; do
             error "Unkown option $1 was given. See -h|--help for available options."
             ;;
    esac
+   shift
 done
 
