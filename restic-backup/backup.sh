@@ -11,7 +11,7 @@ usage() {
 	-h, --help      Show this help message.
 	-r, --run       Execute backup of target files, prune old backups afterwards and check backup integrity.
 	-s, --setup     Setup password file, init repository and create cron entry.
-  --sync          Sync the restic repository to one of the configured drives.
+	--sync          Sync the restic repository to one of the configured drives.
 	EOF
 
     exit 1
