@@ -1,14 +1,14 @@
 # Saiba Tenpura's Scripts
 My personal scripts I use on a regular basis.
 
-## Restic Backup Script
+## Restic Backup
 A lightweight wrapper script around Restic for automated backups, retention management, and optional syncing to external drives.
 
 ### Setup Repo & Cron
 ```
 cp config-example.sh config.sh
 # Adjust the config to match your needs
-sudo ./restic-backup/backup.sh --setup
+sudo ./restic-backup/restic-backup.sh --setup
 Password:
 Confirm Password:
 Init new restic repository!
