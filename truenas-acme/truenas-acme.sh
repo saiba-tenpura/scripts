@@ -3,6 +3,7 @@
 set -eo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+CONFIG_FILE="${SCRIPT_DIR}/config.sh"
 LOG_FILE="${SCRIPT_DIR}/truenas-acme.log"
 
 error() {
@@ -14,31 +15,25 @@ log() {
     printf '[%s] %s\n' "$(date '+%F %T')" "$*" >> "$LOG_FILE"
 }
 
-setup() {
-    if [ ! -f "$LOG_FILE" ]; then
-        touch "$LOG_FILE"
-    fi
-
-    if [ ! -f "${SCRIPT_DIR}/config.sh" ]; then
-        error "Missing configuration file!"
-    fi
-
-    source "${SCRIPT_DIR}/config.sh"
-    if [ ! -f "${SCRIPT_DIR}/acme.sh/acme.sh" ]; then
-        error "Missing acme.sh!"
-    fi
-
-    source "${SCRIPT_DIR}/acme.sh/acme.sh"
-    if [ ! -f "${SCRIPT_DIR}/acme.sh/dnsapi/${PROVIDER}.sh" ]; then
-       error "The configured ACME provider doesn't exists!"
-    fi
-
-    source "${SCRIPT_DIR}/acme.sh/dnsapi/${PROVIDER}.sh"
+require_file() {
+    [[ -f "$1" ]] || error "Missing required file: $1"
 }
 
-if [ "$#" -ne 4 ]; then
-    error "Not enough arguments 4 are required."
-fi
+setup() {
+    touch "$LOG_FILE"
+
+    require_file "$CONFIG_FILE"
+    source "$CONFIG_FILE"
+
+    ACME_DIR="${ACME_DIR:-${SCRIPT_DIR}/acme.sh/}"
+    require_file "${ACME_DIR}/acme.sh"
+    source "${ACME_DIR}/acme.sh"
+
+    require_file "${ACME_DIR}/dnsapi/${PROVIDER}.sh"
+    source "${ACME_DIR}/dnsapi/${PROVIDER}.sh"
+}
+
+[[ "$#" -eq 4 ]] || error "Exactly 4 arguments are required: <set|unset> <domain> <fqdn> <txt>"
 
 setup
 
@@ -62,6 +57,6 @@ case "$action" in
         exit 0
         ;;
     *)
-        error "Unknown action ${action} given"
+        error "Unknown action: ${action}"
         ;;
 esac
