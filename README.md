@@ -39,6 +39,37 @@ Backups are stored in:
           └── <engine>/<project>/<db>.sql.bz2
 ```
 
+
+## TrueNAS ACME
+A shell script for issuing automated DNS challenges via the TrueNAS ACME authenticator by using the acme.sh project.
+
+### Setup Script
+Clone the acme.sh repository into the script directory.
+```
+git clone https://github.com/acmesh-official/acme.sh.git truenas-acme/acme.sh
+```
+
+Copy the config file, configure one of the [many providers](https://github.com/acmesh-official/acme.sh/wiki/dnsapi2) and it's necessary credentials.
+```
+cp truenas-acme/config-example.sh truenas-acme/config.sh
+```
+
+Login to your TrueNAS instance and under Credentials > Certificates:
+- Add an ACME DNS-Authenticators:
+  - **Authenticator:** /path/to/truenas-acme.sh
+  - **User:** Any user which is able to run the script
+  - **Timeout:** 300
+  - **Delay:** 120
+- Add a Certificates Signing Request
+- For the newly created CSR > Create ACME Certificate
+  - Check if it works with Let's Encrypt Staging first
+  - If everything worked create a new one with the Production Directory
+- Under System > General Settings > GUI > Settings > GUI SSL Certificate select the ACME certificate
+
+### Logging
+Logs are by default written to **truenas-acme.log** relative to the script dir.
+
+
 ## Sparse Checkout
 If you only need or want specific scripts you can sparse checkout the scripts you need.
 
