@@ -44,7 +44,7 @@ Backups are stored in:
 A shell script for issuing automated DNS challenges via the TrueNAS ACME authenticator by using the acme.sh project.
 
 ### Setup Script
-Clone the acme.sh repository into the script directory.
+Clone the acme.sh repository into the script directory or configure **ACME_DIR** in your config.sh to wherever you cloned it to.
 ```
 git clone https://github.com/acmesh-official/acme.sh.git truenas-acme/acme.sh
 ```

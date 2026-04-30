@@ -33,6 +33,16 @@ setup() {
     source "${ACME_DIR}/dnsapi/${PROVIDER}.sh"
 }
 
+run_provider() {
+    local action="$1"
+    local fqdn="$2"
+    local txt="$1"
+
+    set +e
+    log "$("$action" "$fqdn" "$txt" 2>&1)"
+    set -e
+}
+
 [[ "$#" -eq 4 ]] || error "Exactly 4 arguments are required: <set|unset> <domain> <fqdn> <txt>"
 
 setup
@@ -45,16 +55,10 @@ txt="$4"
 log "Called with: $@"
 case "$action" in
     set)
-        set +e
-        log "$("${PROVIDER}_add" "$fqdn" "$txt")"
-        set -e
-        exit 0
+        run_provider "${PROVIDER}_add" "$fqdn" "$txt"
         ;;
     unset)
-        set +e
-        log "$("${PROVIDER}_rm" "$fqdn" "$txt")"
-        set -e
-        exit 0
+        run_provider "${PROVIDER}_rm" "$fqdn" "$txt"
         ;;
     *)
         error "Unknown action: ${action}"
