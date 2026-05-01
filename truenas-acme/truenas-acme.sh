@@ -7,7 +7,7 @@ CONFIG_FILE="${SCRIPT_DIR}/config.sh"
 LOG_FILE="${SCRIPT_DIR}/truenas-acme.log"
 
 error() {
-    printf '\e[93mERROR:\e[m %s\n' "${1}"
+    printf '\e[93mERROR:\e[m %s\n' "${1}" >&2
     exit 2
 }
 
@@ -48,6 +48,7 @@ run_provider() {
 setup
 
 action="$1"
+# Currently unused, kept for compatibility only
 domain="$2"
 fqdn="$3"
 txt="$4"
