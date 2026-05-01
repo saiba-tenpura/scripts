@@ -71,6 +71,15 @@ Login to your TrueNAS instance and under Credentials > Certificates:
 Logs are by default written to **truenas-acme.log** relative to the script dir.
 
 
+## Miscellaneous
+
+### Install Latest GE
+Installs the latest release of the proton-ge-custom compatibility layer by GloriousEggroll to the corresponding steam folder.
+```
+./misc/install-latest-ge.sh
+```
+
+
 ## Sparse Checkout
 If you only need or want specific scripts you can sparse checkout the scripts you need.
 
