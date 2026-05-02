@@ -71,6 +71,22 @@ Login to your TrueNAS instance and under Credentials > Certificates:
 Logs are by default written to **truenas-acme.log** relative to the script dir.
 
 
+## Git Mirror
+A shell script for mirroring all repositories of a GitHub account to a Gitea instance. (Requires: jq)
+
+### Setup
+Copy the config file, configure the [GitHub](https://github.com/settings/personal-access-tokens) as well as the [Gitea](https://gitea.example.com/user/settings/applications) token and exclude repositories which you don't want to be synced.
+```
+cp git-mirror/config-example.sh git-mirror/config.sh
+```
+
+### Execution
+If everything has been configured correctly you should be able to just run the script and then see every repository being cloned from GitHub and then being pushed to Gitea.
+```
+./git-mirror/git-mirror.sh
+```
+
+
 ## Miscellaneous
 
 ### Install Latest GE
