@@ -80,6 +80,7 @@ check_gitea_repo() {
 
 main() {
     source "${SCRIPT_DIR}/config.sh"
+    TMP_DIR="${TMP_DIR:-${SCRIPT_DIR}/.tmp_mirror}"
     mkdir -p "$TMP_DIR"
     cd "$TMP_DIR"
 
