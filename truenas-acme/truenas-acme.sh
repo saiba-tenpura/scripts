@@ -43,25 +43,29 @@ run_provider() {
     set -e
 }
 
-[[ "$#" -eq 4 ]] || error "Exactly 4 arguments are required: <set|unset> <domain> <fqdn> <txt>"
+main() {
+    [[ "$#" -eq 4 ]] || error "Exactly 4 arguments are required: <set|unset> <domain> <fqdn> <txt>"
 
-setup
+    setup
 
-action="$1"
-# Currently unused, kept for compatibility only
-domain="$2"
-fqdn="$3"
-txt="$4"
+    local action="$1"
+    # Currently unused, kept for compatibility only
+    local domain="$2"
+    local fqdn="$3"
+    local txt="$4"
 
-log "Called with: $@"
-case "$action" in
-    set)
-        run_provider "${PROVIDER}_add" "$fqdn" "$txt"
-        ;;
-    unset)
-        run_provider "${PROVIDER}_rm" "$fqdn" "$txt"
-        ;;
-    *)
-        error "Unknown action: ${action}"
-        ;;
-esac
+    log "Called with: $@"
+    case "$action" in
+        set)
+            run_provider "${PROVIDER}_add" "$fqdn" "$txt"
+            ;;
+        unset)
+            run_provider "${PROVIDER}_rm" "$fqdn" "$txt"
+            ;;
+        *)
+            error "Unknown action: ${action}"
+            ;;
+    esac
+}
+
+main "$@"
