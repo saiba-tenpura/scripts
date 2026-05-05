@@ -1,2 +1,2 @@
 config*.sh
-!config-sample.sh
+!config-example.sh
