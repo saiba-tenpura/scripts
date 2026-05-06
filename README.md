@@ -1,6 +1,7 @@
 # Saiba Tenpura's Scripts
 My personal scripts I use on a regular basis.
 
+
 ## Restic Backup
 A lightweight wrapper script around Restic for automated backups, retention management, and optional syncing to external drives.
 
@@ -18,7 +19,7 @@ Setup crontab!
 
 
 ## Docker DB Backup
-This script automates backups of databases running inside Docker containers (MySQL, MariaDB, PostgreSQL). It supports daily and monthly backups, retention cleanup, and optional cron setup.
+A shell script which automates backups of databases running inside Docker containers (MySQL, MariaDB, PostgreSQL). It supports daily and monthly backups, retention cleanup, and optional cron setup.
 
 ### Setup Cron
 This creates /etc/cron.d/docker-db-dumps with:
@@ -38,6 +39,42 @@ Backups are stored in:
   └── monthly/
       └── YYYY-MM-DD/
           └── <engine>/<project>/<db>.sql.bz2
+```
+
+
+## Android to PC
+A shell script for syncing specific file types from the given source directories from an MTP mounted android device to a PC. (Requires: gio, rsync)
+
+### File Type Mapping
+| Category	| Extensions                                              |
+| --------- | ------------------------------------------------------- |
+| Audio     | .aac, .wav                                              |
+| Documents	| .json, .md, .opus, .pdf, .stl, .txt, .vcf, .zip         |
+| Pictures	| .bmp, .gif, .jpg, .jpeg, .png, .tgs, .tif, .tiff, .webp |
+| Videos	| .mp4, .webm                                             |
+
+### Setup
+Copy the config file and define the base target directory and the source paths to sync.
+```
+cp android-to-pc/config-example.sh android-to-pc/config.sh
+```
+
+### Execution
+```
+./android-to-pc/android-to-pc.sh android-to-pc/config.sh
+```
+
+### Structure
+Files are synced into:
+```
+<base_target>/
+  ├── 2026/
+  │   ├── Pictures/
+  │   ├── Videos/
+  │   ├── Audio/
+  │   └── Documents/
+  ├── 2027/
+  │   └── ...
 ```
 
 
