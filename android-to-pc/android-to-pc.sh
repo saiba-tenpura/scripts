@@ -12,10 +12,10 @@ source "$1"
 
 # Copy documents, pictures and videos
 declare -A type_to_extension=(
-  [Audio]='*.aac *.wav'
-  [Documents]='*.json *.md *.opus *.pdf *.stl *.txt *.vcf *.zip'
-  [Pictures]='*.bmp *.gif *.jpg *.jpeg *.png *.tgs *.tif *.tiff *.webp'
-  [Videos]='*.mp4 *.webm'
+  [Audio]='aac wav'
+  [Documents]='json md opus pdf stl txt vcf zip'
+  [Pictures]='bmp gif jpg jpeg png tgs tif tiff webp'
+  [Videos]='mp4 webm'
 )
 
 for src in "${sources[@]}"; do
@@ -23,7 +23,8 @@ for src in "${sources[@]}"; do
     for type in "${!type_to_extension[@]}"; do 
         printf 'Type: %s \n' "$type"
         for extension in ${type_to_extension[$type]}; do
-            for file in "$src"/$pattern; do
+            printf 'Extension: %s\n' "$extension"
+            for file in "$src/"*.$extension; do
                 [[ -e "$file" ]] || continue
 
                 year="$(date -r "$file" +%Y)"
