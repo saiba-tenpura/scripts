@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 CONFIG_VARS="RESTIC_REPOSITORY RESTIC_PASSWORD_FILE FILES"
+CONFIG_FILE="${SCRIPT_DIR}/config.sh"
+LOG_FILE="/var/log/restic.log"
 
 usage() {
 	cat <<-EOF
@@ -17,19 +19,19 @@ usage() {
     exit 1
 }
 
-error() {
-    printf '\e[93mERROR:\e[m %s\n' "${1}"
-    exit 2
+log() {
+    printf '[%s] %s\n' "$(date '+%F %T')" "$*" >> "$LOG_FILE"
 }
 
-check() {
-    [ "$EUID" -ne 0 ] && error "Script must be executed as root!"
+error() {
+  printf "[ERROR] %s\n" "$*" >&2
+  exit 2
+}
 
-    ! type -p restic 2>&1 >/dev/null && error "Missing restic binary, please ensure it is installed!"
+load_config() {
+    [ ! -f "$CONFIG_FILE" ] && error "Missing configuration file!"
 
-    [ ! -f "${SCRIPT_DIR}/config.sh" ] && error "Missing configuration file!"
-
-    source "${SCRIPT_DIR}/config.sh"
+    source "$CONFIG_FILE"
     for var in $CONFIG_VARS; do
         if [ -z "${!var}" ]; then
             error "Please configure a value for ${var} in the config.sh!"
@@ -37,11 +39,29 @@ check() {
     done
 }
 
+check() {
+    [ "$EUID" -ne 0 ] && error "Script must be executed as root!"
+
+    ! type -p restic 2>&1 >/dev/null && error "Missing restic binary, please ensure it is installed!"
+
+    [ ! -f "$CONFIG_FILE" ] && error "Missing configuration file!"
+
+    load_config
+}
+
 run() {
-    HOSTNAME=$(uname -n)
+    local hostname="$(uname -n)"
+
+    log 'Start backup'
     restic backup -vv --tag "${HOSTNAME}" $@
+
+    log 'Prune backups'
     restic forget --keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 24 --prune
-    restic check | tee -a /var/log/restic.log
+
+    log 'Run repository check'
+    restic check | tee -a "$LOG_FILE"
+
+    log 'Backup run completed successfully'
     exit 0
 }
 
