@@ -61,8 +61,28 @@ run() {
     log 'Run repository check'
     restic check | tee -a "$LOG_FILE"
 
+    log 'Mirror repository'
+    mirror
+
     log 'Backup run completed successfully'
     exit 0
+}
+
+mirror() {
+    if [[ -z "${MIRROR_HOST:-}" ]]; then
+        log 'Mirror not configured, skipping!'
+        return
+    fi
+
+    rsync -avz --delete \
+      "${RESTIC_REPOSITORY}" \
+      "${MIRROR_USER}@${MIRROR_HOST}:${MIRROR_PATH}/" | tee -a "$LOG_FILE"
+
+    if [ $? -eq 0 ]; then
+        log 'Mirror completed successfully!'
+    else
+        error 'Mirror failed!\n'
+    fi
 }
 
 sync_repo() {

@@ -6,6 +6,10 @@ export FILES=(
     /home/saiba/
 )
 
+export MIRROR_USER=""
+export MIRROR_HOST=""
+export MIRROR_PATH=""
+
 export SYNC_DRIVE_UUIDS=(
     E0CC0679CD06390D
 )
