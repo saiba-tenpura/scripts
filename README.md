@@ -3,7 +3,7 @@ My personal scripts I use on a regular basis.
 
 
 ## Restic Backup
-A lightweight wrapper script around Restic for automated backups, retention management, and optional syncing to external drives.
+A lightweight wrapper script around Restic for automated backups, retention management, and optional syncing to external drives or mirroring to another system via rsync.
 
 ### Setup Repo & Cron
 ```
@@ -15,6 +15,11 @@ Confirm Password:
 Init new restic repository!
 created restic repository at /var/backups/restic-repo
 Setup crontab!
+```
+
+If you are using the mirror function make sure to add the target host to your known hosts.
+```
+ssh-keyscan <HOSTNAME> ~/.ssh/known_hosts
 ```
 
 
@@ -142,6 +147,7 @@ git init
 git remote add origin git@github.com:saiba-tenpura/scripts.git
 git sparse-checkout init
 git sparse-checkout set "restic-backup" "docker-db-backup"
+git fetch
 git checkout main
 ```
 
