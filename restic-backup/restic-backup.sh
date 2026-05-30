@@ -85,9 +85,9 @@ mirror() {
     fi
 }
 
-sync_repo() {
-    uuid="$1"
-    source "${SCRIPT_DIR}/config.sh"
+sync_drives() {
+    local uuid="$1"
+
     sleep 5
     for uuid in $(lsblk --noheadings --list --output uuid); do
         if [[ "${SYNC_DRIVE_UUIDS[*]}" =~ "$uuid" ]]; then
@@ -102,7 +102,7 @@ sync_repo() {
         exit 0
     fi
 
-    mountpoint="$(findmnt -n -o TARGET /dev/disk/by-uuid/$uuid)"
+    local mountpoint="$(findmnt -n -o TARGET /dev/disk/by-uuid/$uuid)"
     if [ ! "$mountpoint" ]; then
         printf 'No mountpoint found, exit.\n'
         exit 0
@@ -117,8 +117,12 @@ sync_repo() {
 }
 
 setup() {
-    [ -f "$RESTIC_PASSWORD_FILE" ] && error "Password file already exists. Aborting setup!"
+    if [[ -f "$RESTIC_PASSWORD_FILE" ]]; then
+        error "Password file already exists. Aborting setup!"
+    fi
 
+    local password
+    local password_confirmation
     printf 'Password:\n'
     read -s password
     printf 'Confirm Password:\n'
@@ -160,7 +164,7 @@ while [ $# -gt 0 ]; do
             ;;
         --sync)
             check
-            sync_repo
+            sync_drives
             ;;
         -r|--run)
             check
