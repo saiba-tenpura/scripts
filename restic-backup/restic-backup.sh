@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+SCRIPT_NAME="$(basename $0)"
 CONFIG_VARS="RESTIC_REPOSITORY RESTIC_PASSWORD_FILE FILES"
 CONFIG_FILE="${SCRIPT_DIR}/config.sh"
 LOG_FILE="/var/log/restic.log"
@@ -123,34 +124,47 @@ setup() {
 
     local password
     local password_confirmation
-    printf 'Password:\n'
-    read -s password
-    printf 'Confirm Password:\n'
-    read -s password_confirmation
-    [[ "${password}" != "${password_confirmation}" ]] && error "Passwords do not match!"
+    read -rsp 'Password: ' password
+    echo
+    read -rsp 'Confirm Password: ' password_confirmation
+    echo
 
-    PASSWORD_DIR=$(dirname "$RESTIC_PASSWORD_FILE")
-    [ ! -d "${PASSWORD_DIR}" ] && mkdir -p "${PASSWORD_DIR}"
+    [[ "${password}" == "${password_confirmation}" ]] || error "Passwords do not match!"
+
+    PASSWORD_DIR="$(dirname "$RESTIC_PASSWORD_FILE")"
+    [ ! -d "${PASSWORD_DIR}" ] && mkdir -m 700 -p "${PASSWORD_DIR}"
     echo "$password" > "$RESTIC_PASSWORD_FILE"
+    chmod 600 "$RESTIC_PASSWORD_FILE"
+
     printf 'Init new restic repository!\n'
     mkdir -p "$RESTIC_REPOSITORY"
     restic init
 
-    printf 'Setup crontab!\n'
-    SCRIPT_NAME="$(basename $0)"
+    setup_cron
+    setup_service
+
+    exit 0
+}
+
+setup_cron() {
 	cat <<-EOF > /etc/cron.d/restic
 	30 10 * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
 	30 20 * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
 	EOF
 
-    ln -s "${SCRIPT_DIR}/sync.rules" /etc/udev/rules.d/80-backup-sync.rules
+    chmod 644 /etc/cron.d/restic
+    printf 'Finished crontab setup!\n'
+}
+
+setup_service() {
+    ln -sf "${SCRIPT_DIR}/sync.rules" /etc/udev/rules.d/80-backup-sync.rules
 	cat <<-EOF > /etc/systemd/system/backup-sync.service
 	[Service]
 	Type=oneshot
 	ExecStart=${SCRIPT_DIR}/${SCRIPT_NAME} --sync
 	EOF
 
-    exit 0
+    printf 'Finished service setup!\n'
 }
 
 while [ $# -gt 0 ]; do
