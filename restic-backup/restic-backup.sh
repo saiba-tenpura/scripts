@@ -54,7 +54,7 @@ run() {
     local hostname="$(uname -n)"
 
     log 'Start backup'
-    restic backup -vv --tag "${HOSTNAME}" $@
+    restic backup -vv --host "$hostname" $@
 
     log 'Prune backups'
     restic forget --keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 24 --prune
@@ -147,9 +147,14 @@ setup() {
 }
 
 setup_cron() {
+    local minute
+    local hostname="$(uname -n)"
+    minute=$(( $(cksum <<<"$hostname" | cut -d' ' -f1) % 60 ))
+    minute=$(( (minute / 5) * 5 ))
+
 	cat <<-EOF > /etc/cron.d/restic
-	30 10 * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
-	30 20 * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
+	${minute} 10 * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
+	${minute} 20 * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
 	EOF
 
     chmod 644 /etc/cron.d/restic
