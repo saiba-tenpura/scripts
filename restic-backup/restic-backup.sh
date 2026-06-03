@@ -25,8 +25,8 @@ log() {
 }
 
 error() {
-  printf "[ERROR] %s\n" "$*" >&2
-  exit 2
+    printf "[ERROR] %s\n" "$*" >&2
+    exit 2
 }
 
 load_config() {
@@ -91,14 +91,14 @@ sync_drives() {
 
     sleep 5
     for uuid in $(lsblk --noheadings --list --output uuid); do
-        if [[ "${SYNC_DRIVE_UUIDS[*]}" =~ "$uuid" ]]; then
+        if [[ " ${SYNC_DRIVE_UUIDS[*]} " =~ " $uuid " ]]; then
             break
         fi
 
         uuid=
     done
 
-    if [ ! $uuid ]; then
+    if [[ -z "$uuid" ]]; then
         printf 'No backup disk found, exit.\n'
         exit 0
     fi
@@ -190,7 +190,7 @@ while [ $# -gt 0 ]; do
             run ${FILES[@]}
             ;;
         *)
-            error "Unkown option $1 was given. See -h|--help for available options."
+            error "Unknown option $1 was given. See -h|--help for available options."
             ;;
    esac
    shift
