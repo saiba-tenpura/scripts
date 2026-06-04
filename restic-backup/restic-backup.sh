@@ -148,13 +148,21 @@ setup() {
 
 setup_cron() {
     local minute
+    local morning_hour
+    local night_hour
     local hostname="$(uname -n)"
-    minute=$(( $(cksum <<<"$hostname" | cut -d' ' -f1) % 60 ))
-    minute=$(( (minute / 5) * 5 ))
+    local seed="$(cksum <<<"$hostname" | cut -d' ' -f1)"
+    minute=$(( (seed % 60 / 5) * 5 ))
+
+    # Run between 6 - 10
+    morning_hour=$(( (seed % 5) + 6 ))
+
+    # Run between 20 - 23
+    night_hour=$(( (seed % 4) + 20 ))
 
 	cat <<-EOF > /etc/cron.d/restic
-	${minute} 10 * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
-	${minute} 20 * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
+	${minute} ${morning_hour} * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
+	${minute} ${night_hour} * * * root ${SCRIPT_DIR}/${SCRIPT_NAME} -r
 	EOF
 
     chmod 644 /etc/cron.d/restic
