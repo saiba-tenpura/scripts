@@ -138,6 +138,23 @@ Installs the latest release of the proton-ge-custom compatibility layer by Glori
 ```
 
 
+### Update Servers
+A bash script for remotely updating multiple Debian/Ubuntu-based servers (apt Package Manager) via SSH.
+```
+./misc/update-servers.sh -s <USER>@<SERVER-01>,<USER>@<SERVER-02>,...
+```
+
+#### Features
+- Interactive confirmation before each action
+- Lists available package updates
+- Installs updates
+- Optional cleanup:
+  - Remove unused packages
+  - Clear package cache
+- Detects if a reboot is required
+- Optional reboot per server
+
+
 ## Sparse Checkout
 If you only need or want specific scripts you can sparse checkout the scripts you need.
 
