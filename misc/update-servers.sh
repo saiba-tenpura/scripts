@@ -69,35 +69,40 @@ for SERVER in "${SERVERS[@]}"; do
     echo "Connecting to $SERVER"
     echo "====================="
 
-    # List updates
-    echo "Fetching available updates..."
-    ssh -t $SERVER 'sudo -v && sudo apt update && apt list --upgradable'
+    echo "Fetch available updates..."
+    ssh -t $SERVER 'sudo -v && sudo apt update'
 
-    # Ask to install updates
-    if request_confirmation "Do you want to install updates on $SERVER?"; then
-        echo "Installing updates..."
-        ssh $SERVER 'sudo apt upgrade -y'
+    echo "Checking for available updates..."
+    updates=$(ssh -t "$SERVER" "apt list --upgradable 2>/dev/null | tail -n +2")
 
-        # Remove unused packages
-        if request_confirmation "Remove unused packages on $SERVER?"; then
-            ssh $SERVER 'sudo apt autoremove -y'
-        fi
-
-        # Clean cache
-        if request_confirmation "Clean package cache on $SERVER?"; then
-            ssh $SERVER 'sudo apt clean'
-        fi
-    fi
-
-    # Check if reboot is required
-    if check_reboot_required "$SERVER"; then
-        echo "Reboot is required on $SERVER."
-        if request_confirmation "Do you want to reboot $SERVER now?"; then
-            # ssh $SERVER 'sudo reboot'
-            echo "$SERVER sudo reboot"
-        fi
+    if [[ -z "$updates" ]]; then
+        echo "No updates available on $SERVER."
     else
-        echo "No reboot required on $SERVER."
+        echo "Updates available on $SERVER:"
+        echo "$updates"
+
+        if request_confirmation "Do you want to install updates on $SERVER?"; then
+            echo "Installing updates..."
+            ssh $SERVER 'sudo apt upgrade -y'
+
+            if request_confirmation "Remove unused packages on $SERVER?"; then
+                ssh $SERVER 'sudo apt autoremove -y'
+            fi
+
+            if request_confirmation "Clean package cache on $SERVER?"; then
+                ssh $SERVER 'sudo apt clean'
+            fi
+        fi
+
+        if check_reboot_required "$SERVER"; then
+            echo "Reboot is required on $SERVER."
+            if request_confirmation "Do you want to reboot $SERVER now?"; then
+                # ssh $SERVER 'sudo reboot'
+                echo "$SERVER sudo reboot"
+            fi
+        else
+            echo "No reboot required on $SERVER."
+        fi
     fi
 
     echo ""
