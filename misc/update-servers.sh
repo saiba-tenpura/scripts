@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
+# Colors
+BLUE=$'\e[33m'
+NC=$'\e[0m'
+
 usage() {
     cat <<-EOF
 	Usage: $(basename "$0") [options]
@@ -12,10 +18,15 @@ usage() {
     exit 1
 }
 
+info() {
+  printf "\n${BLUE}%s${NC}\n" "$1"
+}
+
 request_confirmation() {
     local prompt="$1"
     while true; do
-        read -rp "$prompt [y/n]: " input
+        echo ""
+        read -rp "${BLUE}$prompt ${NC}[y/n]: " input
         case $input in
             [Yy]*)
                 return 0
@@ -24,7 +35,7 @@ request_confirmation() {
                 return 1
                 ;;
             *)
-                echo "Please answer yes or no."
+                info "Please answer yes or no!"
                 ;;
         esac
     done
@@ -65,47 +76,44 @@ if ! ssh-add -l >/dev/null 2>&1; then
 fi
 
 for SERVER in "${SERVERS[@]}"; do
-    echo "====================="
-    echo "Connecting to $SERVER"
-    echo "====================="
+    printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    printf "${BLUE} Server: ${NC}%-35s\n" "$SERVER"
+    printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    echo "Fetch available updates..."
-    ssh -t $SERVER 'sudo -v && sudo apt update'
+    info "Fetching available updates..."
+    ssh -t "$SERVER" 'sudo apt update'
 
-    echo "Checking for available updates..."
+    info "Checking for available updates..."
     updates=$(ssh -t "$SERVER" "apt list --upgradable 2>/dev/null | tail -n +2")
 
     if [[ -z "$updates" ]]; then
-        echo "No updates available on $SERVER."
+        info "No updates available on $SERVER."
     else
-        echo "Updates available on $SERVER:"
+        info "Updates available on $SERVER:"
         echo "$updates"
 
         if request_confirmation "Do you want to install updates on $SERVER?"; then
-            echo "Installing updates..."
-            ssh $SERVER 'sudo apt upgrade -y'
+            info "Installing updates..."
+            ssh -t "$SERVER" 'sudo apt upgrade -y'
 
             if request_confirmation "Remove unused packages on $SERVER?"; then
-                ssh $SERVER 'sudo apt autoremove -y'
+                ssh -t "$SERVER" 'sudo apt autoremove -y'
             fi
 
             if request_confirmation "Clean package cache on $SERVER?"; then
-                ssh $SERVER 'sudo apt clean'
+                ssh -t "$SERVER" 'sudo apt clean'
             fi
         fi
 
         if check_reboot_required "$SERVER"; then
-            echo "Reboot is required on $SERVER."
+            info "Reboot is required on $SERVER"
             if request_confirmation "Do you want to reboot $SERVER now?"; then
-                # ssh $SERVER 'sudo reboot'
-                echo "$SERVER sudo reboot"
+                ssh -t "$SERVER" 'sudo reboot'
             fi
         else
-            echo "No reboot required on $SERVER."
+            info "No reboot required on $SERVER."
         fi
     fi
-
-    echo ""
 done
 
-echo "All servers processed."
+info "All servers processed."
