@@ -43,8 +43,8 @@ request_confirmation() {
 
 check_reboot_required() {
     local server="$1"
-    ssh_cmd="ssh $server 'if [ -f /var/run/reboot-required ]; then echo REBOOT; fi'"
-    result=$($ssh_cmd 2>/dev/null)
+    local result
+    result="$(ssh $server 'if [ -f /var/run/reboot-required ]; then echo REBOOT; fi')"
     [[ "$result" == "REBOOT" ]];
 }
 
@@ -104,15 +104,15 @@ for SERVER in "${SERVERS[@]}"; do
                 ssh -t "$SERVER" 'sudo apt clean'
             fi
         fi
+    fi
 
-        if check_reboot_required "$SERVER"; then
-            info "Reboot is required on $SERVER"
-            if request_confirmation "Do you want to reboot $SERVER now?"; then
-                ssh -t "$SERVER" 'sudo reboot'
-            fi
-        else
-            info "No reboot required on $SERVER."
+    if check_reboot_required "$SERVER"; then
+        info "Reboot is required on $SERVER"
+        if request_confirmation "Do you want to reboot $SERVER now?"; then
+            ssh -t "$SERVER" 'sudo reboot'
         fi
+    else
+        info "No reboot required on $SERVER."
     fi
 done
 
