@@ -19,7 +19,13 @@ usage() {
 }
 
 info() {
-  printf "\n${BLUE}%s${NC}\n" "$1"
+    printf "\n${BLUE}%s${NC}\n" "$1"
+}
+
+header() {
+    printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    printf "${BLUE} Server: ${NC}%-35s\n" "$1"
+    printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 }
 
 request_confirmation() {
@@ -71,14 +77,12 @@ while [ $# -gt 0 ]; do
 done
 
 if ! ssh-add -l >/dev/null 2>&1; then
-    echo "No SSH key loaded. Please run: ssh-add"
-    exit 1
+    info "No SSH key loaded. Running: ssh-add"
+    ssh-add || printf "Failed to load SSH key!" && exit 2
 fi
 
 for SERVER in "${SERVERS[@]}"; do
-    printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    printf "${BLUE} Server: ${NC}%-35s\n" "$SERVER"
-    printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    header "$SERVER"
 
     info "Fetching available updates..."
     ssh -t "$SERVER" 'sudo apt update'
