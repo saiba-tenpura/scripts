@@ -78,14 +78,17 @@ done
 
 if ! ssh-add -l >/dev/null 2>&1; then
     info "No SSH key loaded. Running: ssh-add"
-    ssh-add || printf "Failed to load SSH key!" && exit 2
+    ssh-add || (printf "Failed to load SSH key!" && exit 2)
 fi
 
 for SERVER in "${SERVERS[@]}"; do
     header "$SERVER"
 
+    info "Enter sudo password for $SERVER:"
+    read -s SUDO_PASSWORD
+
     info "Fetching available updates..."
-    ssh -t "$SERVER" 'sudo apt update'
+    ssh -t "$SERVER" "sudo apt update <<< $SUDO_PASSWORD"
 
     info "Checking for available updates..."
     updates=$(ssh -t "$SERVER" "apt list --upgradable 2>/dev/null | tail -n +2")
@@ -98,14 +101,14 @@ for SERVER in "${SERVERS[@]}"; do
 
         if request_confirmation "Do you want to install updates on $SERVER?"; then
             info "Installing updates..."
-            ssh -t "$SERVER" 'sudo apt upgrade -y'
+            ssh -t "$SERVER" "sudo apt upgrade -y <<< $SUDO_PASSWORD"
 
             if request_confirmation "Remove unused packages on $SERVER?"; then
-                ssh -t "$SERVER" 'sudo apt autoremove -y'
+                ssh -t "$SERVER" "sudo apt autoremove -y <<< $SUDO_PASSWORD"
             fi
 
             if request_confirmation "Clean package cache on $SERVER?"; then
-                ssh -t "$SERVER" 'sudo apt clean'
+                ssh -t "$SERVER" "sudo apt clean <<< $SUDO_PASSWORD"
             fi
         fi
     fi
@@ -113,11 +116,13 @@ for SERVER in "${SERVERS[@]}"; do
     if check_reboot_required "$SERVER"; then
         info "Reboot is required on $SERVER"
         if request_confirmation "Do you want to reboot $SERVER now?"; then
-            ssh -t "$SERVER" 'sudo reboot'
+            ssh -t "$SERVER" "sudo reboot <<< $SUDO_PASSWORD"
         fi
     else
         info "No reboot required on $SERVER."
     fi
+
+    unset SUDO_PASSWORD
 done
 
 info "All servers processed."
