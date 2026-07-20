@@ -197,6 +197,10 @@ while [ $# -gt 0 ]; do
             check
             run ${FILES[@]}
             ;;
+	-m|--mirror)
+	    check
+	    mirror
+	    ;;
         *)
             error "Unknown option $1 was given. See -h|--help for available options."
             ;;
