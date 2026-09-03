@@ -36,7 +36,7 @@ setup() {
 run_provider() {
     local action="$1"
     local fqdn="$2"
-    local txt="$1"
+    local txt="$3"
 
     set +e
     log "$("$action" "$fqdn" "$txt" 2>&1)"
