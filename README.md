@@ -17,7 +17,7 @@ created restic repository at /var/backups/restic-repo
 Setup crontab!
 ```
 
-If you are using the mirror function make sure to add the target host to your known hosts.
+If you are using the mirror function, make sure to add the target host to your known hosts.
 ```
 ssh-keyscan <HOSTNAME> ~/.ssh/known_hosts
 ```
@@ -48,7 +48,7 @@ Backups are stored in:
 
 
 ## Android to PC
-A shell script for syncing specific file types from the given source directories from an MTP mounted android device to a PC. (Requires: gio, rsync)
+A shell script for syncing specific file types from the given source directories from an MTP mounted Android device to a PC. (Requires: gio, rsync)
 
 ### File Type Mapping
 | Category	| Extensions                                              |
@@ -92,13 +92,13 @@ Clone the acme.sh repository into the script directory or configure **ACME_DIR**
 git clone https://github.com/acmesh-official/acme.sh.git truenas-acme/acme.sh
 ```
 
-Copy the config file, configure one of the [many providers](https://github.com/acmesh-official/acme.sh/wiki/dnsapi2) and it's necessary credentials.
+Copy the config file, configure one of the [many providers](https://github.com/acmesh-official/acme.sh/wiki/dnsapi2) and its necessary credentials.
 ```
 cp truenas-acme/config-example.sh truenas-acme/config.sh
 ```
 
 Login to your TrueNAS instance and under Credentials > Certificates:
-- Add an ACME DNS-Authenticators:
+- Add an ACME DNS-Authenticator:
   - **Authenticator:** /path/to/truenas-acme.sh
   - **User:** Any user which is able to run the script
   - **Timeout:** 300
@@ -106,7 +106,7 @@ Login to your TrueNAS instance and under Credentials > Certificates:
 - Add a Certificates Signing Request
 - For the newly created CSR > Create ACME Certificate
   - Check if it works with Let's Encrypt Staging first
-  - If everything worked create a new one with the Production Directory
+  - If everything worked, create a new one with the Production Directory
 - Under System > General Settings > GUI > Settings > GUI SSL Certificate select the ACME certificate
 
 ### Logging
@@ -123,7 +123,7 @@ cp git-mirror/config-example.sh git-mirror/config.sh
 ```
 
 ### Execution
-If everything has been configured correctly you should be able to just run the script and then see every repository being cloned from GitHub and then being pushed to Gitea.
+If everything has been configured correctly, you should be able to just run the script, see how every repository is being cloned from GitHub and then pushed to Gitea.
 ```
 ./git-mirror/git-mirror.sh
 ```
@@ -156,9 +156,9 @@ A bash script for remotely updating multiple Debian/Ubuntu-based servers (apt Pa
 
 
 ## Sparse Checkout
-If you only need or want specific scripts you can sparse checkout the scripts you need.
+If you only need or want specific scripts, you can sparse checkout the scripts you need.
 
-For example if you only need the backup scripts:
+For example, if you only need the backup scripts:
 ```
 git init
 git remote add origin git@github.com:saiba-tenpura/scripts.git
