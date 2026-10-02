@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Colors
-BLUE=$'\e[33m'
+INFO_COLOR=$'\e[33m'
 NC=$'\e[0m'
 
 usage() {
@@ -19,12 +19,12 @@ usage() {
 }
 
 info() {
-    printf "\n${BLUE}%s${NC}\n" "$1"
+    printf "\n${INFO_COLOR}%s${NC}\n" "$1"
 }
 
 header() {
     printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    printf "${BLUE} Server: ${NC}%-35s\n" "$1"
+    printf "${INFO_COLOR} Server: ${NC}%-35s\n" "$1"
     printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 }
 
@@ -32,7 +32,7 @@ request_confirmation() {
     local prompt="$1"
     while true; do
         echo ""
-        read -rp "${BLUE}$prompt ${NC}[y/n]: " input
+        read -rp "${INFO_COLOR}$prompt ${NC}[y/n]: " input
         case $input in
             [Yy]*)
                 return 0
