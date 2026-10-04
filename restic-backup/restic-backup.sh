@@ -14,7 +14,8 @@ usage() {
 	-h, --help      Show this help message.
 	-r, --run       Execute backup of target files, prune old backups afterwards and check backup integrity.
 	-s, --setup     Setup password file, init repository and create cron entry.
-	--sync          Sync the restic repository to one of the configured drives.
+	-m, --mirror    Mirror the restic repository to the configured host.
+	-y, --sync      Sync the restic repository to one of the configured drives.
 	EOF
 
     exit 1
@@ -189,7 +190,7 @@ while [ $# -gt 0 ]; do
             check
             setup
             ;;
-        --sync)
+        -y|--sync)
             check
             sync_drives
             ;;
@@ -197,9 +198,9 @@ while [ $# -gt 0 ]; do
             check
             run ${FILES[@]}
             ;;
-	-m|--mirror)
-	    check
-	    mirror
+        -m|--mirror)
+            check
+            mirror
 	    ;;
         *)
             error "Unknown option $1 was given. See -h|--help for available options."

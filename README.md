@@ -17,6 +17,10 @@ created restic repository at /var/backups/restic-repo
 Setup crontab!
 ```
 
+The script creates two cron jobs during setup:
+- One runs daily in the morning (at a randomized hour between 6-10)
+- One runs daily in the evening (at a randomized hour between 20-23)
+
 If you are using the mirror function, make sure to add the target host to your known hosts.
 ```
 ssh-keyscan <HOSTNAME> ~/.ssh/known_hosts
