@@ -7,6 +7,10 @@ LOG_FILE="/var/log/docker-db-dumps.log"
 BACKUP_BASE_DIR="/var/backups/docker-db-dumps"
 BACKUP_IMAGES=(mysql mariadb postgres)
 
+# Retention periods in days
+DAILY_RETENTION=15
+MONTHLY_RETENTION=13
+
 declare -A CMD=(
     [mysql]='mysql -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"'
     [mariadb]='mariadb -u root --password="$MYSQL_ROOT_PASSWORD" -e "show databases" -s --skip-column-names | grep -Ev "(sys|information_schema|performance_schema)"'
@@ -127,11 +131,11 @@ while [ $# -gt 0 ]; do
             ;;
         -d|--daily)
             check
-            run_backup "daily" 15
+            run_backup "daily" "$DAILY_RETENTION"
             ;;
         -m|--monthly)
             check
-            run_backup "monthly" 13
+            run_backup "monthly" "$MONTHLY_RETENTION"
             ;;
         *)
             error "Unsupported option $1 was given. See -h|--help for available options."

@@ -44,11 +44,19 @@ Backups are stored in:
 /var/backups/docker-db-dumps/
   ├── daily/
   │   └── YYYY-MM-DD/
-  │       └── <engine>/<project>/<db>.sql.bz2
+  │       └── <engine>/
+  │           └── <project>/
+  │               └── <db>.sql.bz2
   └── monthly/
       └── YYYY-MM-DD/
-          └── <engine>/<project>/<db>.sql.bz2
+          └── <engine>/
+              └── <project>/
+                  └── <db>.sql.bz2
 ```
+
+The script maintains different retention periods:
+- Daily backups: Retains backups for 15 days (15 daily backups)
+- Monthly backups: Retains backups for 13 months (13 monthly backups)
 
 
 ## Android to PC
