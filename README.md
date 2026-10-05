@@ -76,13 +76,17 @@ Copy the config file and define the base target directory and the source paths t
 cp android-to-pc/config-example.sh android-to-pc/config.sh
 ```
 
+The script expects a configuration with:
+- `base_target`: The root directory where files will be copied to
+- `sources`: An array of source directories to sync from
+
 ### Execution
 ```
 ./android-to-pc/android-to-pc.sh android-to-pc/config.sh
 ```
 
 ### Structure
-Files are synced into:
+The script flattens files from the source directories into a single target structure, with files organized by year and category.
 ```
 <base_target>/
   ├── 2026/
