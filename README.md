@@ -138,6 +138,10 @@ Copy the config file, configure the [GitHub](https://github.com/settings/persona
 cp git-mirror/config-example.sh git-mirror/config.sh
 ```
 
+Requirements:
+- config.sh file with GITHUB_TOKEN, GITEA_URL, GITEA_USER, GITEA_TOKEN
+- curl and git commands available
+
 ### Execution
 If everything has been configured correctly, you should be able to just run the script, see how every repository is being cloned from GitHub and then pushed to Gitea.
 ```
@@ -183,6 +187,7 @@ git sparse-checkout set "restic-backup" "docker-db-backup"
 git fetch
 git checkout main
 ```
+
 
 ## License
 [MIT](./LICENSE)

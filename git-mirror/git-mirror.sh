@@ -12,6 +12,19 @@ error() {
   printf "[ERROR] %s\n" "$*" >&2
 }
 
+usage() {
+    cat <<-EOF
+	Usage: $(basename "$0") [options]
+
+	Mirror GitHub repositories to Gitea.
+
+	Options:
+	-h, --help      Show this help message.
+	EOF
+
+    exit 1
+}
+
 get_github_repos() {
     local -n _repos="${1}"
 
@@ -79,6 +92,11 @@ check_gitea_repo() {
 }
 
 main() {
+    if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+        usage
+        exit 0
+    fi
+
     source "${SCRIPT_DIR}/config.sh"
     TMP_DIR="${TMP_DIR:-${SCRIPT_DIR}/.tmp_mirror}"
     mkdir -p "$TMP_DIR"
@@ -105,4 +123,4 @@ main() {
     log "Mirror complete!"
 }
 
-main
+main "$@"
