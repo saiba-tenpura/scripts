@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-export RESTIC_REPOSITORY="/var/backups/restic-repo"
-export RESTIC_PASSWORD_FILE="/root/.config/.restic"
-export FILES=(
+RESTIC_REPOSITORY="/var/backups/restic-repo"
+RESTIC_PASSWORD_FILE="/root/.config/.restic"
+FILES=(
     /home/saiba/
 )
 
-export MIRROR_USER=""
-export MIRROR_HOST=""
-export MIRROR_PATH=""
+MIRROR_USER=""
+MIRROR_HOST=""
+MIRROR_PATH=""
 
-export SYNC_DRIVE_UUIDS=(
+SYNC_DRIVE_UUIDS=(
     E0CC0679CD06390D
 )

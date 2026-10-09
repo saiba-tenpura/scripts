@@ -3,6 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+CONFIG_FILE="${SCRIPT_DIR}/config.sh"
 
 log() {
   printf "[INFO] %s\n" "$*"
@@ -23,6 +24,26 @@ usage() {
 	EOF
 
     exit 1
+}
+
+load_config() {
+    [ ! -f "$CONFIG_FILE" ] && error "Missing configuration file: $CONFIG_FILE"
+
+    source "$CONFIG_FILE"
+
+    local required_vars=(
+        "GITHUB_USER"
+        "GITHUB_TOKEN"
+        "GITEA_URL"
+        "GITEA_USER"
+        "GITEA_TOKEN"
+    )
+
+    for var in "${required_vars[@]}"; do
+        if [ -z "${!var:-}" ]; then
+            error "Required configuration variable $var is not defined in $CONFIG_FILE"
+        fi
+    done
 }
 
 get_github_repos() {
@@ -97,7 +118,7 @@ main() {
         exit 0
     fi
 
-    source "${SCRIPT_DIR}/config.sh"
+    load_config
     TMP_DIR="${TMP_DIR:-${SCRIPT_DIR}/.tmp_mirror}"
     mkdir -p "$TMP_DIR"
     cd "$TMP_DIR"

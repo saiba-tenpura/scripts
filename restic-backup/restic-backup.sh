@@ -2,7 +2,6 @@
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 SCRIPT_NAME="$(basename $0)"
-CONFIG_VARS="RESTIC_REPOSITORY RESTIC_PASSWORD_FILE FILES"
 CONFIG_FILE="${SCRIPT_DIR}/config.sh"
 LOG_FILE="/var/log/restic.log"
 
@@ -31,12 +30,19 @@ error() {
 }
 
 load_config() {
-    [ ! -f "$CONFIG_FILE" ] && error "Missing configuration file!"
+    [ ! -f "$CONFIG_FILE" ] && error "Missing configuration file: $CONFIG_FILE"
 
     source "$CONFIG_FILE"
-    for var in $CONFIG_VARS; do
-        if [ -z "${!var}" ]; then
-            error "Please configure a value for ${var} in the config.sh!"
+
+    local required_vars=(
+        "RESTIC_REPOSITORY"
+        "RESTIC_PASSWORD_FILE"
+        "FILES"
+    )
+
+    for var in "${required_vars[@]}"; do
+        if [ -z "${!var:-}" ]; then
+            error "Required configuration variable $var is not defined in $CONFIG_FILE"
         fi
     done
 }
@@ -45,8 +51,6 @@ check() {
     [ "$EUID" -ne 0 ] && error "Script must be executed as root!"
 
     ! type -p restic 2>&1 >/dev/null && error "Missing restic binary, please ensure it is installed!"
-
-    [ ! -f "$CONFIG_FILE" ] && error "Missing configuration file!"
 
     load_config
 }
