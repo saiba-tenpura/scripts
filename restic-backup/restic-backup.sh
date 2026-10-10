@@ -185,31 +185,34 @@ setup_service() {
     printf 'Finished service setup!\n'
 }
 
-while [ $# -gt 0 ]; do
-    case "$1" in
-        -h|--help)
-            usage
-            ;;
-        -s|--setup)
-            check
-            setup
-            ;;
-        -y|--sync)
-            check
-            sync_drives
-            ;;
-        -r|--run)
-            check
-            run ${FILES[@]}
-            ;;
-        -m|--mirror)
-            check
-            mirror
-	    ;;
-        *)
-            error "Unknown option $1 was given. See -h|--help for available options."
-            ;;
-   esac
-   shift
-done
+main() {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage
+                ;;
+            -s|--setup)
+                check
+                setup
+                ;;
+            -y|--sync)
+                check
+                sync_drives
+                ;;
+            -r|--run)
+                check
+                run ${FILES[@]}
+                ;;
+            -m|--mirror)
+                check
+                mirror
+	        ;;
+            *)
+                error "Unknown option $1 was given. See -h|--help for available options."
+                ;;
+       esac
+       shift
+    done
+}
 
+main "$@"

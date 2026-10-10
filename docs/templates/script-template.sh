@@ -84,25 +84,29 @@ run() {
 }
 
 # Parse command line options
-while [ $# -gt 0 ]; do
-    case "$1" in
-        -h|--help)
-            usage
-            ;;
-        -s|--setup)
-            setup
-            ;;
-        -r|--run)
-            run
-            ;;
-        *)
-            error "Unknown option $1 was given. See -h|--help for available options."
-            ;;
-    esac
-    shift
-done
+main() {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage
+                ;;
+            -s|--setup)
+                setup
+                ;;
+            -r|--run)
+                run
+                ;;
+            *)
+                error "Unknown option $1 was given. See -h|--help for available options."
+                ;;
+        esac
+        shift
+    done
 
-# Default behavior if no arguments provided
-if [[ $# -eq 0 ]]; then
-    error "No options were given. See -h|--help for available options."
-fi
+    # Default behavior if no arguments provided
+    if [[ $# -eq 0 ]]; then
+        error "No options were given. See -h|--help for available options."
+    fi
+}
+
+main "$@"

@@ -116,31 +116,35 @@ run_backup() {
     exit 0
 }
 
-if [[ $# -eq 0 ]]; then
-    error "No options were given. See -h|--help for available options."
-fi
 
-while [ $# -gt 0 ]; do
-    case "$1" in
-        -h|--help)
-            usage
-            ;;
-        -s|--setup)
-            check
-            setup
-            ;;
-        -d|--daily)
-            check
-            run_backup "daily" "$DAILY_RETENTION"
-            ;;
-        -m|--monthly)
-            check
-            run_backup "monthly" "$MONTHLY_RETENTION"
-            ;;
-        *)
-            error "Unsupported option $1 was given. See -h|--help for available options."
-            ;;
-    esac
-    shift
-done
+main() {
+    if [[ $# -eq 0 ]]; then
+        error "No options were given. See -h|--help for available options."
+    fi
 
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage
+                ;;
+            -s|--setup)
+                check
+                setup
+                ;;
+            -d|--daily)
+                check
+                run_backup "daily" "$DAILY_RETENTION"
+                ;;
+            -m|--monthly)
+                check
+                run_backup "monthly" "$MONTHLY_RETENTION"
+                ;;
+            *)
+                error "Unsupported option $1 was given. See -h|--help for available options."
+                ;;
+        esac
+        shift
+    done
+}
+
+main "$@"
