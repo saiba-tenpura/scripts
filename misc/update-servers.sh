@@ -54,76 +54,81 @@ check_reboot_required() {
     [[ "$result" == "REBOOT" ]];
 }
 
-if [[ $# -eq 0 ]]; then
-    echo "No parameters were provided."
-    exit 2
-fi
+run() {
+    local servers=("$@")
 
-while [ $# -gt 0 ]; do
-     case "$1" in
-        -h|--help)
-            usage
-            ;;
-        -s|--servers)
-            IFS=',' read -r -a SERVERS <<< "$2"
-            shift
-            ;;
-        *)
-            echo "Unknown option $1 was given. See -h|--help for available options." >&2;
-            exit 2
-            ;;
-    esac
-    shift
-done
+    for SERVER in "${servers[@]}"; do
+        header "$SERVER"
 
-if ! ssh-add -l >/dev/null 2>&1; then
-    info "No SSH key loaded. Running: ssh-add"
-    ssh-add || (printf "Failed to load SSH key!" && exit 2)
-fi
+        info "Enter sudo password for $SERVER:"
+        read -s SUDO_PASSWORD
+        printf -v QUOTED_SUDO_PASSWORD "%q" "$SUDO_PASSWORD"
 
-for SERVER in "${SERVERS[@]}"; do
-    header "$SERVER"
+        info "Fetching available updates..."
+        ssh -t "$SERVER" "sudo -S apt update <<< $QUOTED_SUDO_PASSWORD"
 
-    info "Enter sudo password for $SERVER:"
-    read -s SUDO_PASSWORD
-    printf -v QUOTED_SUDO_PASSWORD "%q" "$SUDO_PASSWORD"
+        info "Checking for available updates..."
+        updates=$(ssh -t "$SERVER" "apt list --upgradable 2>/dev/null | tail -n +2")
 
-    info "Fetching available updates..."
-    ssh -t "$SERVER" "sudo -S apt update <<< $QUOTED_SUDO_PASSWORD"
+        if [[ -z "$updates" ]]; then
+            info "No updates available on $SERVER."
+        else
+            info "Updates available on $SERVER:"
+            echo "$updates"
 
-    info "Checking for available updates..."
-    updates=$(ssh -t "$SERVER" "apt list --upgradable 2>/dev/null | tail -n +2")
+            if request_confirmation "Do you want to install updates on $SERVER?"; then
+                info "Installing updates..."
+                ssh -t "$SERVER" "sudo -S apt upgrade -y <<< $QUOTED_SUDO_PASSWORD"
 
-    if [[ -z "$updates" ]]; then
-        info "No updates available on $SERVER."
-    else
-        info "Updates available on $SERVER:"
-        echo "$updates"
+                if request_confirmation "Remove unused packages on $SERVER?"; then
+                    ssh -t "$SERVER" "sudo -S apt autoremove -y <<< $QUOTED_SUDO_PASSWORD"
+                fi
 
-        if request_confirmation "Do you want to install updates on $SERVER?"; then
-            info "Installing updates..."
-            ssh -t "$SERVER" "sudo -S apt upgrade -y <<< $QUOTED_SUDO_PASSWORD"
-
-            if request_confirmation "Remove unused packages on $SERVER?"; then
-                ssh -t "$SERVER" "sudo -S apt autoremove -y <<< $QUOTED_SUDO_PASSWORD"
-            fi
-
-            if request_confirmation "Clean package cache on $SERVER?"; then
-                ssh -t "$SERVER" "sudo -S apt clean <<< $QUOTED_SUDO_PASSWORD"
+                if request_confirmation "Clean package cache on $SERVER?"; then
+                    ssh -t "$SERVER" "sudo -S apt clean <<< $QUOTED_SUDO_PASSWORD"
+                fi
             fi
         fi
-    fi
 
-    if check_reboot_required "$SERVER"; then
-        info "Reboot is required on $SERVER"
-        if request_confirmation "Do you want to reboot $SERVER now?"; then
-            ssh -t "$SERVER" "sudo -S reboot <<< $QUOTED_SUDO_PASSWORD"
+        if check_reboot_required "$SERVER"; then
+            info "Reboot is required on $SERVER"
+            if request_confirmation "Do you want to reboot $SERVER now?"; then
+                ssh -t "$SERVER" "sudo -S reboot <<< $QUOTED_SUDO_PASSWORD"
+            fi
+        else
+            info "No reboot required on $SERVER."
         fi
-    else
-        info "No reboot required on $SERVER."
+
+        unset SUDO_PASSWORD QUOTED_SUDO_PASSWORD
+    done
+
+    info "All servers processed."
+}
+
+main() {
+    if [[ $# -eq 0 ]]; then
+        echo "No parameters were provided."
+        exit 2
     fi
 
-    unset SUDO_PASSWORD QUOTED_SUDO_PASSWORD
-done
+    check_prerequisites
 
-info "All servers processed."
+    while [ $# -gt 0 ]; do
+         case "$1" in
+            -h|--help)
+                usage
+                ;;
+            -s|--servers)
+                IFS=',' read -r -a SERVERS <<< "$2"
+                shift
+                run "${SERVERS[@]}"
+                ;;
+            *)
+                error "Unknown option $1 was given. See -h|--help for available options."
+                ;;
+        esac
+        shift
+    done
+}
+
+main "$@"
