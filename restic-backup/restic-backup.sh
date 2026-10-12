@@ -29,6 +29,14 @@ error() {
     exit 2
 }
 
+check_prerequisites() {
+    [ "$EUID" -ne 0 ] && error "Script must be executed as root!"
+
+    command -v restic >/dev/null 2>&1 || error "Missing restic binary, please ensure it is installed!"
+    command -v rsync >/dev/null 2>&1 || error "rsync is required but not installed"
+    command -v findmnt >/dev/null 2>&1 || error "findmnt is required but not installed"
+}
+
 load_config() {
     [ ! -f "$CONFIG_FILE" ] && error "Missing configuration file: $CONFIG_FILE"
 
@@ -48,10 +56,7 @@ load_config() {
 }
 
 check() {
-    [ "$EUID" -ne 0 ] && error "Script must be executed as root!"
-
-    ! type -p restic 2>&1 >/dev/null && error "Missing restic binary, please ensure it is installed!"
-
+    check_prerequisites
     load_config
 }
 
@@ -206,12 +211,12 @@ main() {
             -m|--mirror)
                 check
                 mirror
-	        ;;
+                ;;
             *)
                 error "Unknown option $1 was given. See -h|--help for available options."
                 ;;
-       esac
-       shift
+        esac
+        shift
     done
 }
 

@@ -2,13 +2,17 @@
 
 set -euo pipefail
 
+SCRIPT_NAME="$(basename "$0")"
+
 # Colors
 INFO_COLOR=$'\e[33m'
 NC=$'\e[0m'
 
 usage() {
-    cat <<-EOF
-	Usage: $(basename "$0") [options]
+	cat <<-EOF
+	Usage: ${SCRIPT_NAME} [options]
+
+	Update servers using apt.
 
 	Options:
 	-h, --help      Show this help message.
@@ -16,6 +20,11 @@ usage() {
 	EOF
 
     exit 1
+}
+
+error() {
+    printf 'ERROR: %s\n' "${1}" >&2
+    exit 2
 }
 
 info() {
@@ -45,6 +54,18 @@ request_confirmation() {
                 ;;
         esac
     done
+}
+
+check_prerequisites() {
+    ! type -p ssh 2>&1 >/dev/null && error "Missing required command 'ssh'!"
+    ! type -p ssh-add 2>&1 >/dev/null && error "Missing required command 'ssh-add'!"
+
+    if ! ssh-add -l >/dev/null 2>&1; then
+        info "No SSH key loaded. Running: ssh-add"
+        if ! ssh-add; then
+            error "Failed to load SSH key!"
+        fi
+    fi
 }
 
 check_reboot_required() {

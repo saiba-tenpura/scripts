@@ -174,6 +174,8 @@ A bash script for remotely updating multiple Debian/Ubuntu-based servers (apt Pa
 - Detects if a reboot is required
 - Optional reboot per server
 
+Note: The script will prompt for sudo passwords during the update process.
+
 
 ## Sparse Checkout
 If you only need or want specific scripts, you can sparse checkout the scripts you need.
@@ -187,7 +189,6 @@ git sparse-checkout set "restic-backup" "docker-db-backup"
 git fetch
 git checkout main
 ```
-
 
 ## License
 [MIT](./LICENSE)

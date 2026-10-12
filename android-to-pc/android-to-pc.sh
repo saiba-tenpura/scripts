@@ -7,9 +7,21 @@ shopt -s nullglob
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 CONFIG_FILE="${SCRIPT_DIR}/config.sh"
 
+declare -A TYPE_MAP=(
+  [Audio]='aac wav'
+  [Documents]='json md opus pdf stl txt vcf zip'
+  [Pictures]='bmp gif jpg jpeg png tgs tif tiff webp'
+  [Videos]='mp4 webm'
+)
+
 error() {
     printf "[ERROR] %s\n" "$*" >&2
     exit 2
+}
+
+check_prerequisites() {
+    command -v gio >/dev/null 2>&1 || error "gio is required but not installed"
+    command -v rsync >/dev/null 2>&1 || error "rsync is required but not installed"
 }
 
 load_config() {
@@ -34,6 +46,7 @@ if [[ $# -gt 0 ]]; then
 fi
 
 main() {
+    check_prerequisites
     load_config
 
     # Mount all available connected MTP devices

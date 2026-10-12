@@ -46,8 +46,15 @@ error() {
     exit 1
 }
 
-check() {
+check_prerequisites() {
     [[ "$EUID" -eq 0 ]] || error "Please run this script as root!"
+
+    command -v docker >/dev/null 2>&1 || error "Docker is required but not installed"
+    command -v bzip2 >/dev/null 2>&1 || error "bzip2 is required but not installed"
+}
+
+check() {
+    check_prerequisites
 }
 
 setup() {
