@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-RESTIC_REPOSITORY="/var/backups/restic-repo"
-RESTIC_PASSWORD_FILE="/root/.config/.restic"
+export RESTIC_REPOSITORY="/var/backups/restic-repo"
+export RESTIC_PASSWORD_FILE="/root/.config/.restic"
 FILES=(
     /home/saiba/
 )
