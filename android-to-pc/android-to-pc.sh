@@ -19,6 +19,10 @@ error() {
     exit 2
 }
 
+warn() {
+    printf "[WARN] %s\n" "$*" >&2
+}
+
 check_prerequisites() {
     command -v gio >/dev/null 2>&1 || error "gio is required but not installed"
     command -v rsync >/dev/null 2>&1 || error "rsync is required but not installed"
@@ -54,11 +58,14 @@ main() {
     load_config
     mount_mtp_devices
 
-    # Mount all available connected MTP devices
-    gio mount -li | awk -F= '{if(index($2,"mtp") == 1)system("gio mount "$2)}'
-
+    local copied=0
     for src in "${SOURCE_DIRS[@]}"; do
         printf 'Dir: %s \n' "$src"
+        if [ ! -d "$src" ]; then
+            warn "Source dir missing, is the device mounted?: $src"
+            continue
+        fi
+
         for type in "${!TYPE_MAP[@]}"; do
             printf 'Type: %s \n' "$type"
             for extension in ${TYPE_MAP[$type]}; do
@@ -72,6 +79,7 @@ main() {
                     mkdir -p "$target_dir"
                     printf 'File: %s to %s \n' "$file" "$target_dir"
                     rsync -avz "$file" "$target_dir/" > /dev/null
+                    copied=$((copied + 1))
                 done
             done
 
@@ -80,6 +88,10 @@ main() {
 
         printf '\n'
     done
+
+    if [ "$copied" -eq 0 ]; then
+        warn 'No files were copied!'
+    fi
 
     printf 'Finished copying!\n'
 }
