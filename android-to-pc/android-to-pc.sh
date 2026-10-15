@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-shopt -s nullglob
+shopt -s nocaseglob nullglob
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 CONFIG_FILE="${SCRIPT_DIR}/config.sh"
@@ -10,7 +10,7 @@ CONFIG_FILE="${SCRIPT_DIR}/config.sh"
 declare -A TYPE_MAP=(
   [Audio]='aac wav'
   [Documents]='json md opus pdf stl txt vcf zip'
-  [Pictures]='bmp gif jpg jpeg png tgs tif tiff webp'
+  [Pictures]='bmp gif jpg jpeg png tga tif tiff webp'
   [Videos]='mp4 webm'
 )
 
@@ -41,6 +41,10 @@ load_config() {
     done
 }
 
+mount_mtp_devices() {
+    gio mount -li | awk -F= '{if(index($2,"mtp") == 1)system("gio mount "$2)}'
+}
+
 if [[ $# -gt 0 ]]; then
     CONFIG_FILE="$1"
 fi
@@ -48,6 +52,7 @@ fi
 main() {
     check_prerequisites
     load_config
+    mount_mtp_devices
 
     # Mount all available connected MTP devices
     gio mount -li | awk -F= '{if(index($2,"mtp") == 1)system("gio mount "$2)}'
