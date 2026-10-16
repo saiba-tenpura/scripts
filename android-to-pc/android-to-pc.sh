@@ -5,6 +5,7 @@ set -euo pipefail
 shopt -s nocaseglob nullglob
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+SCRIPT_NAME="$(basename "$0")"
 CONFIG_FILE="${SCRIPT_DIR}/config.sh"
 
 declare -A TYPE_MAP=(
@@ -23,6 +24,20 @@ warn() {
     printf "[WARN] %s\n" "$*" >&2
 }
 
+usage() {
+	cat <<-EOF
+	Usage: ${SCRIPT_NAME} [options] [config]
+
+	Copies media files from a connected MTP device into the output dir,
+	organized by year and file type.
+
+	Options:
+	-h, --help      Show this help message.
+	EOF
+
+    exit 1
+}
+
 check_prerequisites() {
     command -v gio >/dev/null 2>&1 || error "gio is required but not installed"
     command -v rsync >/dev/null 2>&1 || error "rsync is required but not installed"
@@ -31,6 +46,7 @@ check_prerequisites() {
 load_config() {
     [ ! -f "$CONFIG_FILE" ] && error "Missing configuration file: $CONFIG_FILE"
 
+    printf 'Config: %s\n' "$CONFIG_FILE"
     source "$CONFIG_FILE"
 
     local required_vars=(
@@ -49,11 +65,23 @@ mount_mtp_devices() {
     gio mount -li | awk -F= '{if(index($2,"mtp") == 1)system("gio mount "$2)}'
 }
 
-if [[ $# -gt 0 ]]; then
-    CONFIG_FILE="$1"
-fi
-
 main() {
+    if [[ $# -gt 0 ]]; then
+        CONFIG_FILE="$1"
+    fi
+
+    while [ $# -gt 0 ]; do
+         case "$1" in
+            -h|--help)
+                usage
+                ;;
+            *)
+                error "Unknown option $1 was given. See -h|--help for available options."
+                ;;
+        esac
+        shift
+    done
+
     check_prerequisites
     load_config
     mount_mtp_devices
