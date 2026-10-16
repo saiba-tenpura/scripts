@@ -9,10 +9,10 @@ SCRIPT_NAME="$(basename "$0")"
 CONFIG_FILE="${SCRIPT_DIR}/config.sh"
 
 declare -A TYPE_MAP=(
-  [Audio]='aac wav'
-  [Documents]='json md opus pdf stl txt vcf zip'
-  [Pictures]='bmp gif jpg jpeg png tga tif tiff webp'
-  [Videos]='mp4 webm'
+  [Audio]='aac flac m4a mp3 ogg opus wav'
+  [Documents]='csv docx epub json md pdf pptx stl txt vcf xlsx zip'
+  [Pictures]='bmp gif heic heif jpg jpeg png svg tga tif tiff webp'
+  [Videos]='3gp mkv mp4 mov webm'
 )
 
 error() {
